@@ -18,31 +18,60 @@ try {
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 oracledb.autoCommit = true;
 
-// Read wallet files for thin mode
-function getWalletConfig() {
-  const walletLocation = process.env.ORACLE_WALLET_LOCATION;
+// Decode and write wallet files from base64 environment variables
+function setupWalletFiles() {
   const walletPassword = process.env.ORACLE_WALLET_PASSWORD;
 
-  if (!walletLocation || !walletPassword) {
+  // Check if wallet files are provided as base64 env vars
+  const walletFiles = {
+    'cwallet.sso': process.env.ORACLE_WALLET_CWALLET_SSO,
+    'tnsnames.ora': process.env.ORACLE_WALLET_TNSNAMES_ORA,
+    'sqlnet.ora': process.env.ORACLE_WALLET_SQLNET_ORA,
+    'ewallet.pem': process.env.ORACLE_WALLET_EWALLET_PEM,
+  };
+
+  // Check if any wallet files are provided
+  const hasWalletFiles = Object.values(walletFiles).some(val => val !== undefined);
+
+  if (!hasWalletFiles || !walletPassword) {
+    console.log('No wallet configuration found, attempting connection without mTLS');
     return null;
   }
 
   try {
-    // Read wallet files
-    const cwalletPath = path.join(walletLocation, 'cwallet.sso');
-    const tnsAdminPath = path.join(walletLocation, 'tnsnames.ora');
+    // Use /tmp directory (only writable location in Vercel serverless)
+    const walletDir = '/tmp/oracle_wallet';
 
-    if (!fs.existsSync(cwalletPath)) {
-      console.warn('cwallet.sso not found in wallet location');
+    // Create wallet directory if it doesn't exist
+    if (!fs.existsSync(walletDir)) {
+      fs.mkdirSync(walletDir, { recursive: true });
+      console.log(`Created wallet directory: ${walletDir}`);
+    }
+
+    // Decode and write each wallet file
+    let filesWritten = 0;
+    for (const [filename, base64Content] of Object.entries(walletFiles)) {
+      if (base64Content) {
+        const filepath = path.join(walletDir, filename);
+        const buffer = Buffer.from(base64Content, 'base64');
+        fs.writeFileSync(filepath, buffer);
+        filesWritten++;
+        console.log(`Wrote wallet file: ${filename} (${buffer.length} bytes)`);
+      }
+    }
+
+    if (filesWritten === 0) {
+      console.warn('No wallet files were written');
       return null;
     }
 
+    console.log(`Successfully wrote ${filesWritten} wallet files to ${walletDir}`);
     return {
-      walletLocation,
+      walletLocation: walletDir,
       walletPassword,
     };
   } catch (error) {
-    console.error('Error reading wallet files:', error);
+    console.error('Error setting up wallet files:', error);
     return null;
   }
 }
@@ -68,8 +97,8 @@ export async function getConnection() {
       );
     }
 
-    // Get wallet configuration
-    const walletConfig = getWalletConfig();
+    // Setup wallet files from base64 environment variables
+    const walletConfig = setupWalletFiles();
     console.log('Wallet config:', walletConfig ? 'Found' : 'Not found');
 
     // For Oracle Autonomous Database with wallet, set TNS_ADMIN
