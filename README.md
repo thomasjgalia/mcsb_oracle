@@ -282,6 +282,10 @@ vercel --prod
 
 MIT
 
+## Deployment Status
+
+Production deployment active on Vercel with authentication bypass enabled.
+
 ## Support
 
 For issues, please check:
