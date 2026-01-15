@@ -145,7 +145,7 @@ export const exportToSql = async (data: CodeSetResult[]): Promise<void> => {
       acc[row.child_vocabulary_id] = [];
     }
     acc[row.child_vocabulary_id].push(row.child_code);
-    return {};
+    return acc;
   }, {} as Record<string, string[]>);
 
   // Build SQL snippet
