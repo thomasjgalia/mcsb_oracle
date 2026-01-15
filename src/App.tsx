@@ -155,7 +155,10 @@ function AppContent() {
                       selectedConcept={selectedConcept}
                       selectedDomain={selectedDomain}
                       onAddToCart={addToCart}
-                      onBackToSearch={() => goToStep(1)}
+                      onBackToSearch={() => {
+                        setCurrentStep(1);
+                        navigate('/search');
+                      }}
                       onProceedToCodeSet={() => {
                         setCurrentStep(3);
                         navigate('/codeset');
