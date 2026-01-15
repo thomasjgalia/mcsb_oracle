@@ -24,7 +24,7 @@ async function getPool(): Promise<sql.ConnectionPool> {
     password: process.env.AZURE_SQL_PASSWORD || '',
     options: {
       encrypt: true, // Required for Azure
-      trustServerCertificate: true, // Trust Azure's certificate
+      trustServerCertificate: true, // Required for Azure SQL with mssql library
       connectTimeout: 30000,
       requestTimeout: 30000,
     },
