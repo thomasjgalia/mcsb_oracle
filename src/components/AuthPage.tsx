@@ -34,7 +34,7 @@ export default function AuthPage() {
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -45,7 +45,15 @@ export default function AuthPage() {
         if (error) {
           setError(error.message);
         } else {
-          setEmailSent(true);
+          // Check if email confirmation is required
+          // If user session exists immediately, they're auto-confirmed
+          if (data.session) {
+            // User is automatically logged in (email confirmation disabled)
+            // Auth state change will handle navigation
+          } else {
+            // Email confirmation is required
+            setEmailSent(true);
+          }
         }
       } else {
         // Sign in with email and password
