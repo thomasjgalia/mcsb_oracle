@@ -226,7 +226,7 @@ export default function Step2Hierarchy({
                     {parents.map((result) => (
                       <tr
                         key={result.hierarchy_concept_id}
-                        className={result.concept_class_id === 'Ingredient' ? 'bg-green-50' : ''}
+                        className={result.concept_class_id === 'Ingredient' || result.concept_class_id === 'Lab Test' ? 'bg-green-50' : ''}
                       >
                         <td className="py-1.5 px-2">
                           <span className="badge bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5">
@@ -304,7 +304,7 @@ export default function Step2Hierarchy({
                     {self.map((result) => (
                       <tr
                         key={result.hierarchy_concept_id}
-                        className={result.concept_class_id === 'Ingredient' ? 'bg-green-50' : ''}
+                        className={result.concept_class_id === 'Ingredient' || result.concept_class_id === 'Lab Test' ? 'bg-green-50' : ''}
                       >
                         <td className="py-1.5 px-2">
                           <span className="badge bg-purple-100 text-purple-800 text-xs px-1.5 py-0.5">
@@ -382,7 +382,7 @@ export default function Step2Hierarchy({
                     {children.map((result) => (
                       <tr
                         key={result.hierarchy_concept_id}
-                        className={result.concept_class_id === 'Ingredient' ? 'bg-green-50' : ''}
+                        className={result.concept_class_id === 'Ingredient' || result.concept_class_id === 'Lab Test' ? 'bg-green-50' : ''}
                       >
                         <td className="py-1.5 px-2">
                           <span className="badge bg-green-100 text-green-800 text-xs px-1.5 py-0.5">
