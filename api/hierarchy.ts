@@ -18,6 +18,7 @@ interface HierarchyResult {
   steps_away: number;
   concept_name: string;
   hierarchy_concept_id: number;
+  concept_code: string;
   vocabulary_id: string;
   concept_class_id: string;
   root_term: string;
@@ -93,6 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ca.min_levels_of_separation              AS steps_away,
         a.concept_name                           AS concept_name,
         a.concept_id                             AS hierarchy_concept_id,
+        a.concept_code                           AS concept_code,
         a.vocabulary_id                          AS vocabulary_id,
         a.concept_class_id                       AS concept_class_id,
         c.concept_name                           AS root_term
@@ -122,6 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ca.min_levels_of_separation * -1         AS steps_away,
         a.concept_name                           AS concept_name,
         a.concept_id                             AS hierarchy_concept_id,
+        a.concept_code                           AS concept_code,
         a.vocabulary_id                          AS vocabulary_id,
         a.concept_class_id                       AS concept_class_id,
         c.concept_name                           AS root_term

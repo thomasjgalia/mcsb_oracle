@@ -215,7 +215,7 @@ export default function Step2Hierarchy({
                     <tr>
                       <th className="text-xs py-1.5">Steps</th>
                       <th className="text-xs py-1.5">Concept Name</th>
-                      <th className="text-xs py-1.5">ID</th>
+                      <th className="text-xs py-1.5">Code</th>
                       <th className="text-xs py-1.5">Vocab</th>
                       <th className="text-xs py-1.5">Class</th>
                       <th className="text-xs py-1.5">Re-anchor</th>
@@ -224,14 +224,17 @@ export default function Step2Hierarchy({
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {parents.map((result) => (
-                      <tr key={result.hierarchy_concept_id}>
+                      <tr
+                        key={result.hierarchy_concept_id}
+                        className={result.concept_class_id === 'Ingredient' ? 'bg-green-50' : ''}
+                      >
                         <td className="py-1.5 px-2">
                           <span className="badge bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5">
                             +{result.steps_away}
                           </span>
                         </td>
                         <td className="font-medium text-sm py-1.5 px-2">{result.concept_name}</td>
-                        <td className="text-xs py-1.5 px-2">{result.hierarchy_concept_id}</td>
+                        <td className="text-xs py-1.5 px-2">{result.concept_code}</td>
                         <td className="py-1.5 px-2">
                           <span className="badge badge-primary text-xs px-1.5 py-0.5">{result.vocabulary_id}</span>
                         </td>
@@ -290,7 +293,7 @@ export default function Step2Hierarchy({
                     <tr>
                       <th className="text-xs py-1.5">Steps</th>
                       <th className="text-xs py-1.5">Concept Name</th>
-                      <th className="text-xs py-1.5">ID</th>
+                      <th className="text-xs py-1.5">Code</th>
                       <th className="text-xs py-1.5">Vocab</th>
                       <th className="text-xs py-1.5">Class</th>
                       <th className="text-xs py-1.5">Re-anchor</th>
@@ -299,14 +302,17 @@ export default function Step2Hierarchy({
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {self.map((result) => (
-                      <tr key={result.hierarchy_concept_id}>
+                      <tr
+                        key={result.hierarchy_concept_id}
+                        className={result.concept_class_id === 'Ingredient' ? 'bg-green-50' : ''}
+                      >
                         <td className="py-1.5 px-2">
                           <span className="badge bg-purple-100 text-purple-800 text-xs px-1.5 py-0.5">
                             {result.steps_away}
                           </span>
                         </td>
                         <td className="font-medium text-sm py-1.5 px-2">{result.concept_name}</td>
-                        <td className="text-xs py-1.5 px-2">{result.hierarchy_concept_id}</td>
+                        <td className="text-xs py-1.5 px-2">{result.concept_code}</td>
                         <td className="py-1.5 px-2">
                           <span className="badge badge-primary text-xs px-1.5 py-0.5">{result.vocabulary_id}</span>
                         </td>
@@ -365,7 +371,7 @@ export default function Step2Hierarchy({
                     <tr>
                       <th className="text-xs py-1.5">Steps</th>
                       <th className="text-xs py-1.5">Concept Name</th>
-                      <th className="text-xs py-1.5">ID</th>
+                      <th className="text-xs py-1.5">Code</th>
                       <th className="text-xs py-1.5">Vocab</th>
                       <th className="text-xs py-1.5">Class</th>
                       <th className="text-xs py-1.5">Re-anchor</th>
@@ -374,14 +380,17 @@ export default function Step2Hierarchy({
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {children.map((result) => (
-                      <tr key={result.hierarchy_concept_id}>
+                      <tr
+                        key={result.hierarchy_concept_id}
+                        className={result.concept_class_id === 'Ingredient' ? 'bg-green-50' : ''}
+                      >
                         <td className="py-1.5 px-2">
                           <span className="badge bg-green-100 text-green-800 text-xs px-1.5 py-0.5">
                             {result.steps_away}
                           </span>
                         </td>
                         <td className="font-medium text-sm py-1.5 px-2">{result.concept_name}</td>
-                        <td className="text-xs py-1.5 px-2">{result.hierarchy_concept_id}</td>
+                        <td className="text-xs py-1.5 px-2">{result.concept_code}</td>
                         <td className="py-1.5 px-2">
                           <span className="badge badge-primary text-xs px-1.5 py-0.5">{result.vocabulary_id}</span>
                         </td>

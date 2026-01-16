@@ -36,6 +36,7 @@ export interface HierarchyResult {
   steps_away: number;
   concept_name: string;
   hierarchy_concept_id: number;
+  concept_code: string;
   vocabulary_id: string;
   concept_class_id: string;
   root_term: string;
