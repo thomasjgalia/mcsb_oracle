@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
-import { checkHealth, upsertUserProfile, getUserProfile } from './lib/api';
+import { checkHealth, upsertUserProfile } from './lib/api';
 import type { User } from '@supabase/supabase-js';
 import type { CartItem, SearchResult, DomainType } from './lib/types';
 
@@ -14,14 +14,12 @@ import Step3CodeSet from './components/Step3CodeSet';
 import SavedCodeSets from './components/SavedCodeSets';
 import AuthPage from './components/AuthPage';
 import DirectionsModal from './components/DirectionsModal';
-import PendingApprovalPage from './components/PendingApprovalPage';
 
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [dbWarming, setDbWarming] = useState(false);
   const [dbReady, setDbReady] = useState(false);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -43,54 +41,33 @@ function AppContent() {
       return;
     }
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-
-      // Create/update user profile and check approval status
-      if (session?.user) {
-        try {
-          await upsertUserProfile(
-            session.user.id,
-            session.user.email!,
-            session.user.user_metadata?.display_name
-          );
-
-          // Check approval status
-          const profile = await getUserProfile(session.user.id);
-          setIsApproved(profile?.is_approved ?? false);
-        } catch (err) {
-          console.error('Failed to create user profile or check approval:', err);
-          setIsApproved(false);
-        }
-      }
-
       setLoading(false);
+
+      // Create/update user profile on login
+      if (session?.user) {
+        upsertUserProfile(
+          session.user.id,
+          session.user.email!,
+          session.user.user_metadata?.display_name
+        ).catch(err => console.error('Failed to create user profile:', err));
+      }
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
 
-      // Create/update user profile and check approval status on auth state change
+      // Create/update user profile on auth state change
       if (session?.user) {
-        try {
-          await upsertUserProfile(
-            session.user.id,
-            session.user.email!,
-            session.user.user_metadata?.display_name
-          );
-
-          // Check approval status
-          const profile = await getUserProfile(session.user.id);
-          setIsApproved(profile?.is_approved ?? false);
-        } catch (err) {
-          console.error('Failed to create user profile or check approval:', err);
-          setIsApproved(false);
-        }
-      } else {
-        setIsApproved(null);
+        upsertUserProfile(
+          session.user.id,
+          session.user.email!,
+          session.user.user_metadata?.display_name
+        ).catch(err => console.error('Failed to create user profile:', err));
       }
     });
 
@@ -196,24 +173,6 @@ function AppContent() {
   // If not authenticated, show auth page
   if (!user) {
     return <AuthPage />;
-  }
-
-  // Check if user approval status has been loaded and if user is approved
-  // isApproved is null initially (not loaded), false (not approved), or true (approved)
-  if (isApproved === null) {
-    // Still checking approval status
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking account status...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isApproved) {
-    return <PendingApprovalPage email={user.email || ''} />;
   }
 
   return (

@@ -16,7 +16,6 @@ interface UserProfile {
   email: string;
   display_name?: string;
   preferences?: string;
-  is_approved: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -69,9 +68,6 @@ async function handleUpsertProfile(
     return res.status(400).json(createErrorResponse('Email is required', 400));
   }
 
-  // Auto-approve @veradigm.me emails
-  const isApproved = email.toLowerCase().endsWith('@veradigm.me') ? 1 : 0;
-
   try {
     const pool = await sql.connect(process.env.AZURE_SQL_CONNECTION_STRING || '');
     const request = pool.request();
@@ -88,8 +84,8 @@ async function handleUpsertProfile(
           preferences = @preferences,
           updated_at = GETDATE()
       WHEN NOT MATCHED THEN
-        INSERT (supabase_user_id, email, display_name, preferences, is_approved)
-        VALUES (@supabase_user_id, @email, @display_name, @preferences, @is_approved);
+        INSERT (supabase_user_id, email, display_name, preferences)
+        VALUES (@supabase_user_id, @email, @display_name, @preferences);
 
       SELECT * FROM user_profiles WHERE supabase_user_id = @supabase_user_id;
     `;
@@ -98,7 +94,6 @@ async function handleUpsertProfile(
     request.input('email', sql.NVarChar(255), email);
     request.input('display_name', sql.NVarChar(100), display_name || null);
     request.input('preferences', sql.NVarChar(sql.MAX), preferences || null);
-    request.input('is_approved', sql.Bit, isApproved);
 
     const result = await request.query(query);
     const profile = result.recordset[0] as UserProfile;
