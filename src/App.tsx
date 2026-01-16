@@ -13,6 +13,7 @@ import Step2Hierarchy from './components/Step2Hierarchy';
 import Step3CodeSet from './components/Step3CodeSet';
 import AuthPage from './components/AuthPage';
 import DirectionsModal from './components/DirectionsModal';
+import PendingApprovalPage from './components/PendingApprovalPage';
 
 function AppContent() {
   const navigate = useNavigate();
@@ -140,6 +141,14 @@ function AppContent() {
   // If not authenticated, show auth page
   if (!user) {
     return <AuthPage />;
+  }
+
+  // Check if user's email is confirmed
+  // Note: Supabase email_confirmed_at field indicates if email is verified
+  const isEmailConfirmed = user.email_confirmed_at !== null;
+
+  if (!isEmailConfirmed) {
+    return <PendingApprovalPage email={user.email || ''} />;
   }
 
   return (
