@@ -7,14 +7,28 @@ import type { DomainType, SearchResult } from '../lib/types';
 interface Step1SearchProps {
   onConceptSelected: (concept: SearchResult, domain: DomainType) => void;
   currentStep: number;
+  searchResults: SearchResult[];
+  setSearchResults: (results: SearchResult[]) => void;
+  lastSearchTerm: string;
+  setLastSearchTerm: (term: string) => void;
+  lastSearchDomain: DomainType | '';
+  setLastSearchDomain: (domain: DomainType | '') => void;
 }
 
 const DOMAINS: DomainType[] = ['Condition', 'Drug', 'Procedure', 'Measurement', 'Observation', 'Device'];
 
-export default function Step1Search({ onConceptSelected }: Step1SearchProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [domain, setDomain] = useState<DomainType | ''>('');
-  const [results, setResults] = useState<SearchResult[]>([]);
+export default function Step1Search({
+  onConceptSelected,
+  searchResults,
+  setSearchResults,
+  lastSearchTerm,
+  setLastSearchTerm,
+  lastSearchDomain,
+  setLastSearchDomain,
+}: Step1SearchProps) {
+  const [searchTerm, setSearchTerm] = useState(lastSearchTerm);
+  const [domain, setDomain] = useState<DomainType | ''>(lastSearchDomain);
+  const [results, setResults] = useState<SearchResult[]>(searchResults);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
@@ -48,6 +62,10 @@ export default function Step1Search({ onConceptSelected }: Step1SearchProps) {
       });
 
       setResults(data);
+      // Also save to parent state so results persist when navigating back
+      setSearchResults(data);
+      setLastSearchTerm(searchTerm.trim());
+      setLastSearchDomain(domain as DomainType);
 
       // Track search in history (fire and forget)
       const { data: { session } } = await supabase.auth.getSession();

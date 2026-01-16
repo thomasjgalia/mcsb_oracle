@@ -29,6 +29,11 @@ function AppContent() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isDirectionsOpen, setIsDirectionsOpen] = useState(false);
 
+  // Persist search state across navigation
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [lastSearchTerm, setLastSearchTerm] = useState('');
+  const [lastSearchDomain, setLastSearchDomain] = useState<DomainType | ''>('');
+
   // Check if auth is disabled for local development
   const authDisabled = import.meta.env.VITE_DISABLE_AUTH === 'true';
 
@@ -234,6 +239,12 @@ function AppContent() {
                     <Step1Search
                       onConceptSelected={handleConceptSelected}
                       currentStep={currentStep}
+                      searchResults={searchResults}
+                      setSearchResults={setSearchResults}
+                      lastSearchTerm={lastSearchTerm}
+                      setLastSearchTerm={setLastSearchTerm}
+                      lastSearchDomain={lastSearchDomain}
+                      setLastSearchDomain={setLastSearchDomain}
                     />
                   }
                 />
