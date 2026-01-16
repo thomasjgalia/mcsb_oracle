@@ -146,25 +146,24 @@ function AppContent() {
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Medical Code Set Builder
+                <h1 className="text-lg font-bold text-gray-900">
+                  Medical Code Set Builder - Powered by OMOP Vocabulary Tables
                 </h1>
-                <p className="text-sm text-gray-500">OMOP Vocabulary Explorer</p>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsDirectionsOpen(true)}
-                  className="btn-secondary text-sm"
+                  className="btn-secondary text-xs px-3 py-1.5"
                 >
                   How to Use
                 </button>
-                <span className="text-sm text-gray-600">{user.email}</span>
+                <span className="text-xs text-gray-600">{user.email}</span>
                 <button
                   onClick={() => supabase.auth.signOut()}
-                  className="btn-secondary text-sm"
+                  className="btn-secondary text-xs px-3 py-1.5"
                 >
                   Sign Out
                 </button>
@@ -182,7 +181,7 @@ function AppContent() {
         />
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           {/* Main Content Area - Full Width */}
           <div>
             <Routes>

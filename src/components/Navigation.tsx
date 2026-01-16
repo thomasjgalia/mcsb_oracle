@@ -43,15 +43,15 @@ export default function Navigation({ currentStep, onStepClick, cartItemCount, on
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-2">
           {/* Step Navigation */}
-          <div className="flex items-center space-x-4 overflow-x-auto flex-1">
+          <div className="flex items-center space-x-2 overflow-x-auto flex-1">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
                 <button
                   onClick={() => handleStepClick(step)}
                   className={`
-                    flex items-center gap-3 px-4 py-2 rounded-lg transition-all
+                    flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all
                     ${
                       currentStep === step.number
                         ? 'bg-primary-50 text-primary-700 shadow-sm'
@@ -64,7 +64,7 @@ export default function Navigation({ currentStep, onStepClick, cartItemCount, on
                   {/* Step Icon */}
                   <div
                     className={`
-                      flex items-center justify-center w-8 h-8 rounded-full
+                      flex items-center justify-center w-6 h-6 rounded-full
                       ${
                         currentStep === step.number
                           ? 'bg-primary-600 text-white'
@@ -74,19 +74,18 @@ export default function Navigation({ currentStep, onStepClick, cartItemCount, on
                       }
                     `}
                   >
-                    <step.icon className="w-4 h-4" />
+                    <step.icon className="w-3 h-3" />
                   </div>
 
                   {/* Step Info */}
                   <div className="text-left">
-                    <div className="text-sm font-semibold">{step.title}</div>
-                    <div className="text-xs opacity-75">{step.description}</div>
+                    <div className="text-xs font-semibold">{step.title}</div>
                   </div>
                 </button>
 
                 {/* Chevron between steps */}
                 {index < steps.length - 1 && (
-                  <ChevronRight className="w-5 h-5 text-gray-400 mx-2" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />
                 )}
               </div>
             ))}
@@ -95,9 +94,9 @@ export default function Navigation({ currentStep, onStepClick, cartItemCount, on
           {/* Shopping Cart Button */}
           <button
             onClick={onCartClick}
-            className="relative ml-4 p-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 text-gray-700 hover:text-primary-600"
+            className="relative ml-3 p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 text-gray-700 hover:text-primary-600"
           >
-            <ShoppingCart className="w-6 h-6" />
+            <ShoppingCart className="w-5 h-5" />
             {cartItemCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {cartItemCount}
