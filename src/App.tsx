@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
-import { checkHealth, upsertUserProfile } from './lib/api';
+import { checkHealth, upsertUserProfile, getUserProfile } from './lib/api';
 import type { User } from '@supabase/supabase-js';
 import type { CartItem, SearchResult, DomainType } from './lib/types';
 
@@ -21,6 +21,7 @@ function AppContent() {
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [dbWarming, setDbWarming] = useState(false);
   const [dbReady, setDbReady] = useState(false);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -42,33 +43,54 @@ function AppContent() {
       return;
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
-      setLoading(false);
 
-      // Create/update user profile on login
+      // Create/update user profile and check approval status
       if (session?.user) {
-        upsertUserProfile(
-          session.user.id,
-          session.user.email!,
-          session.user.user_metadata?.display_name
-        ).catch(err => console.error('Failed to create user profile:', err));
+        try {
+          await upsertUserProfile(
+            session.user.id,
+            session.user.email!,
+            session.user.user_metadata?.display_name
+          );
+
+          // Check approval status
+          const profile = await getUserProfile(session.user.id);
+          setIsApproved(profile?.is_approved ?? false);
+        } catch (err) {
+          console.error('Failed to create user profile or check approval:', err);
+          setIsApproved(false);
+        }
       }
+
+      setLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
 
-      // Create/update user profile on auth state change
+      // Create/update user profile and check approval status on auth state change
       if (session?.user) {
-        upsertUserProfile(
-          session.user.id,
-          session.user.email!,
-          session.user.user_metadata?.display_name
-        ).catch(err => console.error('Failed to create user profile:', err));
+        try {
+          await upsertUserProfile(
+            session.user.id,
+            session.user.email!,
+            session.user.user_metadata?.display_name
+          );
+
+          // Check approval status
+          const profile = await getUserProfile(session.user.id);
+          setIsApproved(profile?.is_approved ?? false);
+        } catch (err) {
+          console.error('Failed to create user profile or check approval:', err);
+          setIsApproved(false);
+        }
+      } else {
+        setIsApproved(null);
       }
     });
 
@@ -176,11 +198,21 @@ function AppContent() {
     return <AuthPage />;
   }
 
-  // Check if user's email is confirmed
-  // Note: Supabase email_confirmed_at field indicates if email is verified
-  const isEmailConfirmed = user.email_confirmed_at !== null;
+  // Check if user approval status has been loaded and if user is approved
+  // isApproved is null initially (not loaded), false (not approved), or true (approved)
+  if (isApproved === null) {
+    // Still checking approval status
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking account status...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (!isEmailConfirmed) {
+  if (!isApproved) {
     return <PendingApprovalPage email={user.email || ''} />;
   }
 

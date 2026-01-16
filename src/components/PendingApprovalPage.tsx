@@ -23,7 +23,7 @@ export default function PendingApprovalPage({ email }: PendingApprovalPageProps)
           </div>
 
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">
-            {isVeradigmEmail ? 'Confirm Your Email' : 'Approval Pending'}
+            Approval Pending
           </h2>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -43,10 +43,10 @@ export default function PendingApprovalPage({ email }: PendingApprovalPageProps)
           {isVeradigmEmail ? (
             <>
               <p className="text-center text-gray-600 mb-4">
-                We've sent a confirmation email to your address.
+                Your <strong>@veradigm.me</strong> account should be automatically approved.
               </p>
               <p className="text-sm text-center text-gray-500 mb-6">
-                Please check your inbox and click the confirmation link to activate your account.
+                If you continue to see this message, please contact your system administrator.
               </p>
             </>
           ) : (
@@ -61,7 +61,7 @@ export default function PendingApprovalPage({ email }: PendingApprovalPageProps)
             </>
           )}
 
-          <div className="border-t border-gray-200 pt-6 space-y-3">
+          <div className="border-t border-gray-200 pt-6">
             <button
               onClick={handleSignOut}
               className="btn-secondary w-full flex items-center justify-center gap-2"
@@ -69,12 +69,6 @@ export default function PendingApprovalPage({ email }: PendingApprovalPageProps)
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
-
-            {isVeradigmEmail && (
-              <p className="text-xs text-center text-gray-500">
-                Didn't receive the email? Check your spam folder or sign out and try again.
-              </p>
-            )}
           </div>
         </div>
 

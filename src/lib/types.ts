@@ -114,6 +114,7 @@ export interface UserProfile {
   email: string;
   display_name?: string;
   preferences?: string; // JSON string
+  is_approved: boolean;
   created_at: string;
   updated_at: string;
 }
