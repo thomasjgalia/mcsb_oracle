@@ -171,9 +171,11 @@ async function searchUMLS(
     'LNC'  // LOINC is abbreviated as LNC in UMLS
   ];
 
-  const filteredResults = results.filter(result =>
-    allowedVocabularies.includes(result.rootSource)
-  );
+  // Only apply backend vocabulary filter if user didn't specify vocabularies
+  // When user selects specific vocabularies, the UMLS API 'sabs' parameter handles filtering
+  const filteredResults = vocabularies && vocabularies.length > 0
+    ? results  // User selected specific vocabularies, trust UMLS API filtering
+    : results.filter(result => allowedVocabularies.includes(result.rootSource));  // No selection, filter to allowed list
 
   // Sort by vocabulary (rootSource) then by code (ui)
   filteredResults.sort((a, b) => {
