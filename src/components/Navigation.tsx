@@ -1,6 +1,7 @@
 import { Search, GitBranch, PackageCheck, ChevronRight, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AIChatAssistant from './AIChatAssistant';
+import UMLSSearch from './UMLSSearch';
 
 interface NavigationProps {
   currentStep: 1 | 2 | 3;
@@ -92,9 +93,10 @@ export default function Navigation({ currentStep, onStepClick, cartItemCount, on
             ))}
           </div>
 
-          {/* AI Assistant */}
-          <div className="ml-3">
+          {/* AI Assistant & UMLS Search */}
+          <div className="ml-3 flex items-center gap-2">
             <AIChatAssistant />
+            <UMLSSearch />
           </div>
 
           {/* Shopping Cart Button */}

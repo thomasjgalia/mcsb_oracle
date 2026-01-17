@@ -16,6 +16,8 @@ import type {
   GetCodeSetsResponse,
   GetCodeSetDetailResponse,
   SearchHistoryRecord,
+  UMLSSearchRequest,
+  UMLSSearchResponse,
 } from './types';
 
 // In development with Vercel Dev, API routes are served on the same origin
@@ -410,4 +412,30 @@ export const sendChatMessage = async (
   }
 
   return response.data.data.message;
+};
+
+// ============================================================================
+// UMLS Search
+// ============================================================================
+
+/**
+ * Search UMLS (Unified Medical Language System) for medical terms
+ */
+export const searchUMLS = async (
+  request: UMLSSearchRequest
+): Promise<UMLSSearchResponse> => {
+  try {
+    const response = await apiClient.post<ApiResponse<UMLSSearchResponse>>(
+      '/api/umls-search',
+      request
+    );
+
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'UMLS search failed');
+    }
+
+    return response.data.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
 };

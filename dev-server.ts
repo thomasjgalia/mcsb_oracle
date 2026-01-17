@@ -21,6 +21,7 @@ import searchHandler from './api/search.js';
 import hierarchyHandler from './api/hierarchy.js';
 import codesetHandler from './api/codeset.js';
 import chatHandler from './api/chat.js';
+import umlsSearchHandler from './api/umls-search.js';
 import profileHandler from './api/user/profile.js';
 import codesetsHandler from './api/user/codesets.js';
 import searchHistoryHandler from './api/user/search-history.js';
@@ -66,6 +67,7 @@ app.post('/api/search', vercelToExpress(searchHandler));
 app.post('/api/hierarchy', vercelToExpress(hierarchyHandler));
 app.post('/api/codeset', vercelToExpress(codesetHandler));
 app.post('/api/chat', vercelToExpress(chatHandler));
+app.post('/api/umls-search', vercelToExpress(umlsSearchHandler));
 
 // User API Routes
 app.post('/api/user/profile', vercelToExpress(profileHandler));
@@ -94,5 +96,6 @@ app.listen(PORT, () => {
   console.log('  AZURE_SQL_CONNECTION_STRING:', process.env.AZURE_SQL_CONNECTION_STRING ? '✓ Set' : '✗ Not set');
   console.log('  SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✓ Set' : '✗ Not set');
   console.log('  OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✓ Set' : '✗ Not set');
+  console.log('  UMLS_API_KEY:', process.env.UMLS_API_KEY ? '✓ Set' : '✗ Not set');
   console.log('\n');
 });
