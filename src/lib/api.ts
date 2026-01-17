@@ -272,8 +272,9 @@ export const getSavedCodeSets = async (
 ): Promise<GetCodeSetsResponse[]> => {
   try {
     console.log('📡 API: Requesting saved code sets for userId:', userId);
+    // Don't pass userId in URL - the API will use the authenticated user's ID
     const response = await apiClient.get<ApiResponse<GetCodeSetsResponse[]>>(
-      `/api/user/codesets/${userId}`
+      '/api/user/codesets'
     );
 
     console.log('📡 API: Response:', response.data);
@@ -297,8 +298,9 @@ export const getCodeSetDetail = async (
   codeSetId: number
 ): Promise<GetCodeSetDetailResponse | null> => {
   try {
+    // Use query parameter instead of URL path
     const response = await apiClient.get<ApiResponse<GetCodeSetDetailResponse>>(
-      `/api/user/codesets/detail/${codeSetId}`
+      `/api/user/codesets?codeSetId=${codeSetId}`
     );
 
     if (!response.data.success || !response.data.data) {
@@ -317,8 +319,9 @@ export const getCodeSetDetail = async (
  */
 export const deleteCodeSet = async (codeSetId: number): Promise<boolean> => {
   try {
+    // Use query parameter instead of URL path
     const response = await apiClient.delete<ApiResponse<void>>(
-      `/api/user/codesets/${codeSetId}`
+      `/api/user/codesets?codeSetId=${codeSetId}`
     );
 
     return response.data.success;

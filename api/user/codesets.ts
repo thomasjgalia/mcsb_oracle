@@ -47,8 +47,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'POST') {
       return await handleSaveCodeSet(req, res, user.id);
     } else if (req.method === 'GET') {
-      // Check if this is detail endpoint or list endpoint
-      if (req.url?.includes('/detail/')) {
+      // Check query params to determine which handler to use
+      const codeSetId = req.query.codeSetId as string | undefined;
+      if (codeSetId) {
         return await handleGetCodeSetDetail(req, res, user.id);
       } else {
         return await handleGetCodeSets(req, res, user.id);
@@ -130,24 +131,10 @@ async function handleGetCodeSets(
   res: VercelResponse,
   authenticatedUserId: string
 ) {
-  // Try to get userId from both URL path and query params
-  const userIdFromPath = req.url?.split('/codesets/')[1]?.split('?')[0];
-  const userId = userIdFromPath || (req.query.userId as string);
+  // Use the authenticated user's ID directly
+  const userId = authenticatedUserId;
 
-  console.log('📋 GET Code Sets - URL:', req.url);
-  console.log('📋 GET Code Sets - userId from path:', userIdFromPath);
-  console.log('📋 GET Code Sets - final userId:', userId);
-  console.log('📋 GET Code Sets - authenticatedUserId:', authenticatedUserId);
-
-  if (!userId) {
-    return res.status(400).json(createErrorResponse('User ID is required', 400));
-  }
-
-  // Verify user can only access their own code sets (case-insensitive comparison)
-  if (userId.toLowerCase() !== authenticatedUserId.toLowerCase()) {
-    console.warn('❌ User ID mismatch:', userId.toLowerCase(), 'vs', authenticatedUserId.toLowerCase());
-    return res.status(403).json(createErrorResponse('Forbidden', 403));
-  }
+  console.log('📋 GET Code Sets - userId:', userId);
 
   try {
     const pool = await sql.connect(process.env.AZURE_SQL_CONNECTION_STRING || '');
@@ -185,11 +172,9 @@ async function handleGetCodeSetDetail(
   res: VercelResponse,
   authenticatedUserId: string
 ) {
-  // Extract codeSetId from URL path
-  const codeSetIdFromPath = req.url?.split('/detail/')[1]?.split('?')[0];
-  const codeSetId = codeSetIdFromPath || (req.query.codeSetId as string);
+  // Get codeSetId from query parameter
+  const codeSetId = req.query.codeSetId as string;
 
-  console.log('📄 GET Code Set Detail - URL:', req.url);
   console.log('📄 GET Code Set Detail - codeSetId:', codeSetId);
 
   if (!codeSetId) {
@@ -252,11 +237,9 @@ async function handleDeleteCodeSet(
   res: VercelResponse,
   authenticatedUserId: string
 ) {
-  // Extract codeSetId from URL path
-  const codeSetIdFromPath = req.url?.split('/codesets/')[1]?.split('?')[0];
-  const codeSetId = codeSetIdFromPath || (req.query.codeSetId as string);
+  // Get codeSetId from query parameter
+  const codeSetId = req.query.codeSetId as string;
 
-  console.log('🗑️ DELETE Code Set - URL:', req.url);
   console.log('🗑️ DELETE Code Set - codeSetId:', codeSetId);
 
   if (!codeSetId) {
