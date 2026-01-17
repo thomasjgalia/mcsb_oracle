@@ -158,7 +158,7 @@ async function searchUMLS(
     };
   });
 
-  // Filter to only include specific vocabularies
+  // Filter to only include specific vocabularies (using UMLS source abbreviations)
   const allowedVocabularies = [
     'ICD10CM',
     'SNOMEDCT_US',
@@ -168,7 +168,7 @@ async function searchUMLS(
     'ATC',
     'CPT',
     'HCPCS',
-    'LOINC'
+    'LNC'  // LOINC is abbreviated as LNC in UMLS
   ];
 
   const filteredResults = results.filter(result =>

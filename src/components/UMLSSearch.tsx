@@ -3,17 +3,17 @@ import { Search, X, Loader2, BookOpen, Copy, Check, ExternalLink } from 'lucide-
 import { searchUMLS } from '../lib/api';
 import type { UMLSSearchResult } from '../lib/types';
 
-// Common UMLS vocabulary sources
+// UMLS vocabulary sources with correct abbreviations
 const VOCABULARY_OPTIONS = [
   { value: 'ICD10CM', label: 'ICD-10-CM' },
   { value: 'ICD9CM', label: 'ICD-9-CM' },
+  { value: 'SNOMEDCT_US', label: 'SNOMED CT' },
+  { value: 'RXNORM', label: 'RxNorm' },
+  { value: 'NDC', label: 'NDC' },
+  { value: 'ATC', label: 'ATC' },
   { value: 'CPT', label: 'CPT' },
   { value: 'HCPCS', label: 'HCPCS' },
-  { value: 'SNOMEDCT_US', label: 'SNOMED CT (US)' },
-  { value: 'RXNORM', label: 'RxNorm' },
-  { value: 'LOINC', label: 'LOINC' },
-  { value: 'NDC', label: 'NDC' },
-  { value: 'MSH', label: 'MeSH' },
+  { value: 'LNC', label: 'LOINC' },
 ];
 
 export default function UMLSSearch() {
