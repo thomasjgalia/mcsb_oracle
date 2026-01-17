@@ -24,14 +24,16 @@ export default function SavedCodeSets() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        console.error('No user session found');
+        console.error('❌ No user session found');
         return;
       }
 
+      console.log('📋 Loading code sets for user:', session.user.id);
       const sets = await getSavedCodeSets(session.user.id);
+      console.log('✅ Loaded code sets:', sets.length, sets);
       setCodeSets(sets);
     } catch (error) {
-      console.error('Failed to load code sets:', error);
+      console.error('❌ Failed to load code sets:', error);
       alert('Failed to load saved code sets. Please try again.');
     } finally {
       setLoading(false);

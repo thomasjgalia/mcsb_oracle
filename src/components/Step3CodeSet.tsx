@@ -365,113 +365,104 @@ export default function Step3CodeSet({
           {/* Combined Filters Panel */}
           {(availableVocabularies.length > 1 || availableAttributes.length > 0) && (
             <div className="card p-3">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                Filters
-              </h3>
-
-              {/* Attribute Filter (if attributes exist) */}
-              {availableAttributes.length > 0 && (
-                <div className="mb-3 pb-3 border-b border-gray-200">
-                  <div className="flex gap-2 items-end">
-                    <div className="flex-1">
-                      <label htmlFor="attributeFilter" className="block text-xs font-medium text-gray-700 mb-1">
-                        Attribute
-                      </label>
+              <div className="flex gap-4">
+                {/* Attribute Filter (if attributes exist) */}
+                {availableAttributes.length > 0 && (
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                      Filter by Attribute
+                    </h3>
+                    <div className="flex gap-2">
                       <select
                         id="attributeFilter"
                         value={selectedAttribute}
                         onChange={(e) => setSelectedAttribute(e.target.value)}
-                        className="select-field text-xs w-full"
+                        className="select-field text-xs flex-1"
                       >
-                        <option value="">All (no filter)</option>
+                        <option value="">All attributes</option>
                         {availableAttributes.map((attr) => (
                           <option key={attr} value={attr}>
                             {attr}
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div className="flex-1">
-                      <label htmlFor="valueFilter" className="block text-xs font-medium text-gray-700 mb-1">
-                        Value
-                      </label>
                       <select
                         id="valueFilter"
                         value={selectedValue}
                         onChange={(e) => setSelectedValue(e.target.value)}
-                        className="select-field text-xs w-full"
+                        className="select-field text-xs flex-1"
                         disabled={!selectedAttribute || availableValues.length === 0}
                       >
-                        <option value="">Select a value...</option>
+                        <option value="">All values</option>
                         {availableValues.map((val) => (
                           <option key={val} value={val}>
                             {val}
                           </option>
                         ))}
                       </select>
-                    </div>
-                    {(selectedAttribute || selectedValue) && (
-                      <button
-                        onClick={() => {
-                          setSelectedAttribute('');
-                          setSelectedValue('');
-                        }}
-                        className="btn-secondary text-xs px-2 py-1.5 whitespace-nowrap"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Vocabulary Filter */}
-              {availableVocabularies.length > 1 && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-medium text-gray-700">
-                      Vocabularies
-                    </label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={selectAllVocabularies}
-                        className="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                      >
-                        All
-                      </button>
-                      <span className="text-gray-300">|</span>
-                      <button
-                        onClick={clearAllVocabularies}
-                        className="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                      >
-                        None
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {availableVocabularies.map((vocab) => {
-                      const count = results.filter((r) => r.child_vocabulary_id === vocab).length;
-                      const isSelected = selectedVocabularies.has(vocab);
-                      return (
+                      {(selectedAttribute || selectedValue) && (
                         <button
-                          key={vocab}
-                          onClick={() => toggleVocabulary(vocab)}
-                          className={`
-                            px-2 py-1 rounded-lg border text-xs font-medium transition-colors
-                            ${
-                              isSelected
-                                ? 'bg-primary-100 border-primary-300 text-primary-700'
-                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                            }
-                          `}
+                          onClick={() => {
+                            setSelectedAttribute('');
+                            setSelectedValue('');
+                          }}
+                          className="btn-secondary text-xs px-2 py-1.5 whitespace-nowrap"
                         >
-                          {vocab} ({count})
+                          Clear
                         </button>
-                      );
-                    })}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Vocabulary Filter */}
+                {availableVocabularies.length > 1 && (
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Filter by Vocabulary
+                      </h3>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={selectAllVocabularies}
+                          className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                          All
+                        </button>
+                        <span className="text-gray-300">|</span>
+                        <button
+                          onClick={clearAllVocabularies}
+                          className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                          None
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableVocabularies.map((vocab) => {
+                        const count = results.filter((r) => r.child_vocabulary_id === vocab).length;
+                        const isSelected = selectedVocabularies.has(vocab);
+                        return (
+                          <button
+                            key={vocab}
+                            onClick={() => toggleVocabulary(vocab)}
+                            className={`
+                              px-2 py-1 rounded-lg border text-xs font-medium transition-colors
+                              ${
+                                isSelected
+                                  ? 'bg-primary-100 border-primary-300 text-primary-700'
+                                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }
+                            `}
+                          >
+                            {vocab} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <p className="mt-2 text-xs text-gray-500">
                 {selectedAttribute && selectedValue

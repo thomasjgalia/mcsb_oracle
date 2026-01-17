@@ -271,17 +271,21 @@ export const getSavedCodeSets = async (
   userId: string
 ): Promise<GetCodeSetsResponse[]> => {
   try {
+    console.log('📡 API: Requesting saved code sets for userId:', userId);
     const response = await apiClient.get<ApiResponse<GetCodeSetsResponse[]>>(
       `/api/user/codesets/${userId}`
     );
 
+    console.log('📡 API: Response:', response.data);
+
     if (!response.data.success || !response.data.data) {
+      console.warn('⚠️ API: No data returned or unsuccessful response');
       return [];
     }
 
     return response.data.data;
   } catch (error) {
-    console.error('Failed to get saved code sets:', error);
+    console.error('❌ API: Failed to get saved code sets:', error);
     return [];
   }
 };
