@@ -93,11 +93,6 @@ export default function UMLSSearch() {
     setError('');
   };
 
-  const copyCUI = (cui: string) => {
-    navigator.clipboard.writeText(cui);
-    setCopiedCUI(cui);
-  };
-
   return (
     <>
       {/* Floating Button */}
