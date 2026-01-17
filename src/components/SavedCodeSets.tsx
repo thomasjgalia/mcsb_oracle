@@ -49,6 +49,17 @@ export default function SavedCodeSets() {
     setLoadingDetail(true);
     try {
       const detail = await getCodeSetDetail(codeSetId);
+      if (detail) {
+        console.log('📊 Code set detail loaded:', {
+          id: detail.id,
+          name: detail.code_set_name,
+          source_type: detail.source_type,
+          total_concepts: detail.total_concepts,
+          concepts_array_length: detail.concepts?.length || 0,
+          first_concept: detail.concepts?.[0],
+          last_concept: detail.concepts?.[detail.concepts.length - 1]
+        });
+      }
       setSelectedCodeSet(detail);
     } catch (error) {
       console.error('Failed to load code set detail:', error);
