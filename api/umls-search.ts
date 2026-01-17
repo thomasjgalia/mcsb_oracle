@@ -177,13 +177,6 @@ async function searchUMLS(
     ? results  // User selected specific vocabularies, trust UMLS API filtering
     : results.filter(result => allowedVocabularies.includes(result.rootSource));  // No selection, filter to allowed list
 
-  // Debug: Log unique vocabularies in results
-  if (vocabularies && vocabularies.length > 0) {
-    const uniqueVocabs = [...new Set(filteredResults.map(r => r.rootSource))];
-    console.log('📚 Vocabularies in filtered results:', uniqueVocabs.join(', '));
-    console.log('🎯 User requested vocabularies:', vocabularies.join(', '));
-  }
-
   // Sort by vocabulary (rootSource) then by code (ui)
   filteredResults.sort((a, b) => {
     if (a.rootSource !== b.rootSource) {

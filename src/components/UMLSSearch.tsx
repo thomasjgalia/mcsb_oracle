@@ -52,7 +52,6 @@ export default function UMLSSearch() {
     setResults([]);
 
     try {
-      console.log('Searching UMLS with vocabularies:', selectedVocabs);
       const response = await searchUMLS({
         searchTerm: searchTerm.trim(),
         vocabularies: selectedVocabs.length > 0 ? selectedVocabs : undefined,
@@ -80,12 +79,10 @@ export default function UMLSSearch() {
   };
 
   const toggleVocabulary = (vocab: string) => {
-    console.log('Toggling vocabulary:', vocab);
     setSelectedVocabs(prev => {
       const newVocabs = prev.includes(vocab)
         ? prev.filter(v => v !== vocab)
         : [...prev, vocab];
-      console.log('Selected vocabularies:', newVocabs);
       return newVocabs;
     });
   };
@@ -191,7 +188,7 @@ export default function UMLSSearch() {
                 {/* Vocabulary Filters */}
                 <div>
                   <label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                    Filter by Vocabulary (optional):
+                    Select vocabulary button(s) below and re-execute search for more granular results.
                   </label>
                   <div className="flex flex-wrap gap-1.5">
                     {VOCABULARY_OPTIONS.map((vocab) => {
