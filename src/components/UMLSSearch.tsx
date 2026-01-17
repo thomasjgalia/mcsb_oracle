@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, X, Loader2, BookOpen, Copy, Check, ExternalLink } from 'lucide-react';
-import { searchUMLS } from '../lib/api';
-import type { UMLSSearchResult } from '../lib/types';
+import { Search, X, Loader2, BookOpen, Copy, Check, ExternalLink, Save, CheckCircle } from 'lucide-react';
+import { searchUMLS, saveCodeSet } from '../lib/api';
+import { supabase } from '../lib/supabase';
+import SaveCodeSetModal from './SaveCodeSetModal';
+import type { UMLSSearchResult, SavedUMLSConcept, UMLSCodeSetMetadata } from '../lib/types';
 
 // UMLS vocabulary sources with correct abbreviations
 const VOCABULARY_OPTIONS = [
@@ -24,6 +26,9 @@ export default function UMLSSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copiedCUI, setCopiedCUI] = useState<string | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus input when modal opens
@@ -92,6 +97,64 @@ export default function UMLSSearch() {
     setSelectedVocabs([]);
     setResults([]);
     setError('');
+  };
+
+  const handleSaveCodeSet = async (name: string, description: string) => {
+    setSaving(true);
+    setSaveSuccess(false);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        throw new Error('Not authenticated');
+      }
+
+      console.log('💾 Saving UMLS code set:', {
+        userId: session.user.id,
+        name,
+        description,
+        resultCount: results.length,
+      });
+
+      // Convert UMLS results to saveable format
+      const umlsConcepts: SavedUMLSConcept[] = results.flatMap(result =>
+        result.sources?.map(source => ({
+          code: source.code,
+          vocabulary: source.vocabulary,
+          term: source.term,
+          sourceConcept: source.sourceConcept
+        })) || []
+      );
+
+      // Create metadata object
+      const metadata: UMLSCodeSetMetadata = {
+        search_term: searchTerm,
+        selected_vocabularies: selectedVocabs.length > 0 ? selectedVocabs : undefined,
+        total_results: results.length,
+        saved_at: new Date().toISOString()
+      };
+
+      const result = await saveCodeSet(session.user.id, {
+        code_set_name: name,
+        description: description || `UMLS search for "${searchTerm}" saved on ${new Date().toLocaleDateString()}`,
+        concepts: umlsConcepts,
+        source_type: 'UMLS',
+        source_metadata: JSON.stringify(metadata)
+      });
+
+      console.log('✅ UMLS code set saved successfully:', result);
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      setShowSaveModal(false);
+    } catch (error) {
+      console.error('❌ Failed to save UMLS code set:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert(`Failed to save code set: ${errorMessage}\n\nCheck browser console for full details.`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -255,6 +318,28 @@ export default function UMLSSearch() {
                       <p className="text-sm font-medium text-gray-700">
                         Found {results.length} result{results.length !== 1 ? 's' : ''}
                       </p>
+                      <button
+                        onClick={() => setShowSaveModal(true)}
+                        disabled={saving}
+                        className={`
+                          flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors
+                          ${saveSuccess
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-green-600 text-white hover:bg-green-700'}
+                        `}
+                      >
+                        {saveSuccess ? (
+                          <>
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Saved!
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-3.5 h-3.5" />
+                            {saving ? 'Saving...' : 'Save as Code Set'}
+                          </>
+                        )}
+                      </button>
                     </div>
 
                     <div className="space-y-2">
@@ -347,6 +432,14 @@ export default function UMLSSearch() {
           </div>
         </>
       )}
+
+      {/* Save Code Set Modal */}
+      <SaveCodeSetModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={handleSaveCodeSet}
+        conceptCount={results.flatMap(r => r.sources || []).length}
+      />
     </>
   );
 }

@@ -108,6 +108,7 @@ export default function Step3CodeSet({
         code_set_name: name,
         description: description || `Saved on ${new Date().toLocaleDateString()}`,
         concepts: shoppingCart,
+        source_type: 'OMOP',
       });
 
       console.log('✅ Code set saved successfully:', result);
@@ -366,6 +367,54 @@ export default function Step3CodeSet({
           {(availableVocabularies.length > 1 || availableAttributes.length > 0) && (
             <div className="card p-3">
               <div className="flex gap-4">
+                {/* Vocabulary Filter */}
+                {availableVocabularies.length > 1 && (
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Filter by Vocabulary
+                      </h3>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={selectAllVocabularies}
+                          className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                          All
+                        </button>
+                        <span className="text-gray-300">|</span>
+                        <button
+                          onClick={clearAllVocabularies}
+                          className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                          None
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableVocabularies.map((vocab) => {
+                        const count = results.filter((r) => r.child_vocabulary_id === vocab).length;
+                        const isSelected = selectedVocabularies.has(vocab);
+                        return (
+                          <button
+                            key={vocab}
+                            onClick={() => toggleVocabulary(vocab)}
+                            className={`
+                              px-2 py-1 rounded-lg border text-xs font-medium transition-colors
+                              ${
+                                isSelected
+                                  ? 'bg-primary-100 border-primary-300 text-primary-700'
+                                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }
+                            `}
+                          >
+                            {vocab} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Attribute Filter (if attributes exist) */}
                 {availableAttributes.length > 0 && (
                   <div className="flex-1">
@@ -411,54 +460,6 @@ export default function Step3CodeSet({
                           Clear
                         </button>
                       )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Vocabulary Filter */}
-                {availableVocabularies.length > 1 && (
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        Filter by Vocabulary
-                      </h3>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={selectAllVocabularies}
-                          className="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                        >
-                          All
-                        </button>
-                        <span className="text-gray-300">|</span>
-                        <button
-                          onClick={clearAllVocabularies}
-                          className="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                        >
-                          None
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {availableVocabularies.map((vocab) => {
-                        const count = results.filter((r) => r.child_vocabulary_id === vocab).length;
-                        const isSelected = selectedVocabularies.has(vocab);
-                        return (
-                          <button
-                            key={vocab}
-                            onClick={() => toggleVocabulary(vocab)}
-                            className={`
-                              px-2 py-1 rounded-lg border text-xs font-medium transition-colors
-                              ${
-                                isSelected
-                                  ? 'bg-primary-100 border-primary-300 text-primary-700'
-                                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                              }
-                            `}
-                          >
-                            {vocab} ({count})
-                          </button>
-                        );
-                      })}
                     </div>
                   </div>
                 )}

@@ -4,8 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { getSavedCodeSets, getCodeSetDetail, deleteCodeSet } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
-import type { GetCodeSetsResponse, GetCodeSetDetailResponse, SavedCodeSetConcept } from '../lib/types';
+import type { GetCodeSetsResponse, GetCodeSetDetailResponse, SavedCodeSetConcept, SavedUMLSConcept } from '../lib/types';
 import type { CartItem } from '../lib/types';
+
+// Type guard to check if a concept is an OMOP concept
+function isOMOPConcept(concept: SavedCodeSetConcept | SavedUMLSConcept): concept is SavedCodeSetConcept {
+  return 'hierarchy_concept_id' in concept;
+}
 
 export default function SavedCodeSets() {
   const navigate = useNavigate();
@@ -81,6 +86,13 @@ export default function SavedCodeSets() {
         throw new Error('Failed to load code set details');
       }
 
+      // Only OMOP code sets can be edited (they have hierarchical structure)
+      // UMLS code sets are flat lists and can't be rebuilt
+      if (detail.source_type !== 'OMOP') {
+        alert('UMLS code sets cannot be edited. They are saved search results without hierarchical structure.');
+        return;
+      }
+
       // Extract unique root concepts from the saved code set
       // The saved concepts all have a root_term field that shows which root they came from
       // We need to group by root_term to find unique roots, but we need their actual IDs
@@ -88,7 +100,10 @@ export default function SavedCodeSets() {
       // concepts that are actually the roots (where concept_name matches root_term)
       const rootConceptsMap = new Map<string, CartItem>();
 
-      detail.concepts.forEach((concept: SavedCodeSetConcept) => {
+      detail.concepts.forEach((concept) => {
+        // Type guard to ensure we're working with OMOP concepts
+        if (!isOMOPConcept(concept)) return;
+
         // Only add concepts where the concept name matches the root term
         // These are the actual root concepts from the original shopping cart
         if (concept.concept_name === concept.root_term) {
@@ -118,13 +133,22 @@ export default function SavedCodeSets() {
   };
 
   const handleExportTxt = (codeSet: GetCodeSetDetailResponse) => {
-    // Group by vocabulary
-    const byVocab = codeSet.concepts.reduce<Record<string, number[]>>(
-      (acc: Record<string, number[]>, concept: typeof codeSet.concepts[0]) => {
-        if (!acc[concept.vocabulary_id]) {
-          acc[concept.vocabulary_id] = [];
+    // Group by vocabulary - handle both OMOP and UMLS concepts
+    const byVocab = codeSet.concepts.reduce<Record<string, string[]>>(
+      (acc: Record<string, string[]>, concept) => {
+        if (isOMOPConcept(concept)) {
+          // OMOP concept - use vocabulary_id and hierarchy_concept_id
+          if (!acc[concept.vocabulary_id]) {
+            acc[concept.vocabulary_id] = [];
+          }
+          acc[concept.vocabulary_id].push(concept.hierarchy_concept_id.toString());
+        } else {
+          // UMLS concept - use vocabulary and code
+          if (!acc[concept.vocabulary]) {
+            acc[concept.vocabulary] = [];
+          }
+          acc[concept.vocabulary].push(concept.code);
         }
-        acc[concept.vocabulary_id].push(concept.hierarchy_concept_id);
         return acc;
       },
       {}
@@ -201,7 +225,18 @@ export default function SavedCodeSets() {
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{codeSet.code_set_name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">{codeSet.code_set_name}</h3>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          codeSet.source_type === 'UMLS'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}
+                      >
+                        {codeSet.source_type}
+                      </span>
+                    </div>
                     {codeSet.description && (
                       <p className="text-sm text-gray-600 mt-1">{codeSet.description}</p>
                     )}
@@ -227,8 +262,17 @@ export default function SavedCodeSets() {
                         e.stopPropagation();
                         handleEdit(codeSet.id);
                       }}
-                      className="p-2 text-green-600 hover:bg-green-50 rounded"
-                      title="Edit code set"
+                      disabled={codeSet.source_type === 'UMLS'}
+                      className={`p-2 rounded ${
+                        codeSet.source_type === 'UMLS'
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-green-600 hover:bg-green-50'
+                      }`}
+                      title={
+                        codeSet.source_type === 'UMLS'
+                          ? 'UMLS code sets cannot be edited'
+                          : 'Edit code set'
+                      }
                     >
                       <Edit className="w-4 h-4" />
                     </button>
@@ -281,10 +325,10 @@ export default function SavedCodeSets() {
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Concept ID
+                          {selectedCodeSet.source_type === 'OMOP' ? 'Concept ID' : 'Code'}
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Name
+                          {selectedCodeSet.source_type === 'OMOP' ? 'Name' : 'Term'}
                         </th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                           Vocabulary
@@ -295,13 +339,13 @@ export default function SavedCodeSets() {
                       {selectedCodeSet.concepts.map((concept, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
                           <td className="px-3 py-2 text-gray-900 font-mono">
-                            {concept.hierarchy_concept_id}
+                            {isOMOPConcept(concept) ? concept.hierarchy_concept_id : concept.code}
                           </td>
                           <td className="px-3 py-2 text-gray-700">
-                            {concept.concept_name}
+                            {isOMOPConcept(concept) ? concept.concept_name : concept.term}
                           </td>
                           <td className="px-3 py-2 text-gray-600">
-                            {concept.vocabulary_id}
+                            {isOMOPConcept(concept) ? concept.vocabulary_id : concept.vocabulary}
                           </td>
                         </tr>
                       ))}

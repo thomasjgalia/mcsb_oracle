@@ -22,11 +22,20 @@ interface SavedCodeSetConcept {
   domain_id: string;
 }
 
+interface SavedUMLSConcept {
+  code: string;
+  vocabulary: string;
+  term: string;
+  sourceConcept: string;
+}
+
 interface SaveCodeSetRequest {
   supabase_user_id: string;
   code_set_name: string;
   description?: string;
-  concepts: SavedCodeSetConcept[];
+  concepts: SavedCodeSetConcept[] | SavedUMLSConcept[];
+  source_type: 'OMOP' | 'UMLS';
+  source_metadata?: string;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -79,6 +88,8 @@ async function handleSaveCodeSet(
     code_set_name,
     description,
     concepts,
+    source_type,
+    source_metadata,
   } = req.body as SaveCodeSetRequest;
 
   // Verify user can only save to their own account
@@ -90,6 +101,10 @@ async function handleSaveCodeSet(
     return res.status(400).json(createErrorResponse('Code set name and concepts are required', 400));
   }
 
+  if (!source_type || (source_type !== 'OMOP' && source_type !== 'UMLS')) {
+    return res.status(400).json(createErrorResponse('Valid source_type is required (OMOP or UMLS)', 400));
+  }
+
   try {
     const pool = await sql.connect(process.env.AZURE_SQL_CONNECTION_STRING || '');
     const request = pool.request();
@@ -99,9 +114,9 @@ async function handleSaveCodeSet(
 
     const query = `
       INSERT INTO saved_code_sets
-        (supabase_user_id, code_set_name, description, concepts, total_concepts)
+        (supabase_user_id, code_set_name, description, concepts, total_concepts, source_type, source_metadata)
       VALUES
-        (@supabase_user_id, @code_set_name, @description, @concepts, @total_concepts);
+        (@supabase_user_id, @code_set_name, @description, @concepts, @total_concepts, @source_type, @source_metadata);
 
       SELECT SCOPE_IDENTITY() AS id;
     `;
@@ -111,11 +126,13 @@ async function handleSaveCodeSet(
     request.input('description', sql.NVarChar(sql.MAX), description || null);
     request.input('concepts', sql.NVarChar(sql.MAX), conceptsJson);
     request.input('total_concepts', sql.Int, totalConcepts);
+    request.input('source_type', sql.VarChar(10), source_type);
+    request.input('source_metadata', sql.NVarChar(sql.MAX), source_metadata || null);
 
     const result = await request.query(query);
     const id = result.recordset[0].id;
 
-    console.log('✅ Code set saved:', id);
+    console.log(`✅ ${source_type} code set saved:`, id);
     return res.status(200).json(createSuccessResponse({ id }));
   } catch (error) {
     console.error('Failed to save code set:', error);
@@ -146,6 +163,8 @@ async function handleGetCodeSets(
         code_set_name,
         description,
         total_concepts,
+        source_type,
+        source_metadata,
         created_at,
         updated_at
       FROM saved_code_sets
@@ -193,6 +212,8 @@ async function handleGetCodeSetDetail(
         description,
         concepts,
         total_concepts,
+        source_type,
+        source_metadata,
         created_at,
         updated_at
       FROM saved_code_sets

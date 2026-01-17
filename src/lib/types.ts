@@ -135,6 +135,8 @@ export interface SavedCodeSetRecord {
   description?: string;
   concepts: string; // JSON string
   total_concepts: number;
+  source_type: 'OMOP' | 'UMLS'; // Source type to distinguish code set origin
+  source_metadata?: string; // JSON string with additional metadata
   created_at: string;
   updated_at: string;
 }
@@ -157,11 +159,29 @@ export interface SearchHistoryRecord {
   searched_at: string;
 }
 
+// UMLS-specific saved code set concept (flatter structure than OMOP)
+export interface SavedUMLSConcept {
+  code: string;
+  vocabulary: string;
+  term: string;
+  sourceConcept: string;
+}
+
+// Metadata for UMLS code sets
+export interface UMLSCodeSetMetadata {
+  search_term: string;
+  selected_vocabularies?: string[];
+  total_results: number;
+  saved_at: string;
+}
+
 // Request/Response types for user data API
 export interface SaveCodeSetRequest {
   code_set_name: string;
   description?: string;
-  concepts: SavedCodeSetConcept[];
+  concepts: SavedCodeSetConcept[] | SavedUMLSConcept[];
+  source_type: 'OMOP' | 'UMLS';
+  source_metadata?: string; // JSON string
 }
 
 export interface GetCodeSetsResponse {
@@ -169,12 +189,14 @@ export interface GetCodeSetsResponse {
   code_set_name: string;
   description?: string;
   total_concepts: number;
+  source_type: 'OMOP' | 'UMLS';
+  source_metadata?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface GetCodeSetDetailResponse extends GetCodeSetsResponse {
-  concepts: SavedCodeSetConcept[];
+  concepts: SavedCodeSetConcept[] | SavedUMLSConcept[];
 }
 
 // ============================================================================
