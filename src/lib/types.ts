@@ -3,7 +3,7 @@
 // ============================================================================
 
 // Domain types for medical concepts
-export type DomainType = 'Condition' | 'Drug' | 'Procedure' | 'Measurement' | 'Observation' | 'Device' | 'Aman\'s Domain';
+export type DomainType = 'Condition' | 'Drug' | 'Procedure' | 'Measurement' | 'Observation' | 'Device';
 
 // Combination filter for Drug domain
 export type ComboFilter = 'ALL' | 'SINGLE' | 'COMBINATION';
