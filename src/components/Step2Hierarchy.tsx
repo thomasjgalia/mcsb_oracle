@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { GitBranch, Loader2, AlertCircle, Plus, ArrowLeft, CheckCircle, RotateCw } from 'lucide-react';
+import { GitBranch, Loader2, AlertCircle, Plus, ArrowLeft, CheckCircle, RotateCw, PackageCheck } from 'lucide-react';
 import { getHierarchy } from '../lib/api';
 import type { SearchResult, HierarchyResult, CartItem, DomainType } from '../lib/types';
 
 interface Step2HierarchyProps {
   selectedConcept: SearchResult | null;
   selectedDomain: DomainType | null;
+  shoppingCart: CartItem[];
   onAddToCart: (item: CartItem) => void;
   onBackToSearch: () => void;
   onProceedToCodeSet: () => void;
@@ -15,6 +16,7 @@ interface Step2HierarchyProps {
 export default function Step2Hierarchy({
   selectedConcept,
   selectedDomain,
+  shoppingCart,
   onAddToCart,
   onBackToSearch,
   onProceedToCodeSet,
@@ -139,10 +141,18 @@ export default function Step2Hierarchy({
               </span>
             </div>
           </div>
-          <button onClick={onBackToSearch} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
-            <ArrowLeft className="w-3 h-3" />
-            Back
-          </button>
+          <div className="flex gap-2">
+            <button onClick={onBackToSearch} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
+              <ArrowLeft className="w-3 h-3" />
+              Back
+            </button>
+            {shoppingCart.length > 0 && (
+              <button onClick={onProceedToCodeSet} className="btn-primary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
+                <PackageCheck className="w-3 h-3" />
+                Go to Build ({shoppingCart.length})
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -72,10 +72,13 @@ app.post('/api/umls-search', vercelToExpress(umlsSearchHandler));
 // User API Routes
 app.post('/api/user/profile', vercelToExpress(profileHandler));
 app.get('/api/user/profile/:userId', vercelToExpress(profileHandler));
+
+// Code sets routes - order matters! More specific routes first
 app.post('/api/user/codesets', vercelToExpress(codesetsHandler));
-app.get('/api/user/codesets/:userId', vercelToExpress(codesetsHandler));
-app.get('/api/user/codesets/detail/:codeSetId', vercelToExpress(codesetsHandler));
-app.delete('/api/user/codesets/:codeSetId', vercelToExpress(codesetsHandler));
+app.get('/api/user/codesets', vercelToExpress(codesetsHandler)); // Get user's code sets (uses JWT)
+app.delete('/api/user/codesets', vercelToExpress(codesetsHandler)); // Delete code set (codeSetId in query)
+
+// Search history routes
 app.post('/api/user/search-history', vercelToExpress(searchHistoryHandler));
 app.get('/api/user/search-history/:userId', vercelToExpress(searchHistoryHandler));
 

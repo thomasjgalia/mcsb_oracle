@@ -75,6 +75,9 @@ export const checkHealth = async (): Promise<{
   }
 };
 
+// Alias for checkHealth - used for testing connection on Landing page
+export const testConnection = checkHealth;
+
 // ============================================================================
 // Step 1: Search Query
 // ============================================================================

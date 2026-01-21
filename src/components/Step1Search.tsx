@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search, Loader2, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown, ShoppingCart, GitBranch } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Loader2, AlertCircle, ArrowUpDown, ArrowUp, ArrowDown, ShoppingCart, GitBranch, PackageCheck } from 'lucide-react';
 import { searchConcepts, trackSearch } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import type { DomainType, SearchResult, CartItem } from '../lib/types';
@@ -10,6 +11,7 @@ type SortDirection = 'asc' | 'desc';
 interface Step1SearchProps {
   onConceptSelected: (concept: SearchResult, domain: DomainType) => void;
   currentStep: number;
+  workflow: 'direct' | 'hierarchical';
   searchResults: SearchResult[];
   setSearchResults: (results: SearchResult[]) => void;
   lastSearchTerm: string;
@@ -18,6 +20,7 @@ interface Step1SearchProps {
   setLastSearchDomain: (domain: DomainType | '') => void;
   addToCart: (item: CartItem) => void;
   addMultipleToCart: (items: CartItem[]) => void;
+  removeMultipleFromCart: (conceptIds: number[]) => void;
   shoppingCart: CartItem[];
 }
 
@@ -25,6 +28,7 @@ const DOMAINS: DomainType[] = ['Condition', 'Drug', 'Procedure', 'Measurement', 
 
 export default function Step1Search({
   onConceptSelected,
+  workflow,
   searchResults,
   setSearchResults,
   lastSearchTerm,
@@ -33,8 +37,10 @@ export default function Step1Search({
   setLastSearchDomain,
   addToCart,
   addMultipleToCart,
+  removeMultipleFromCart,
   shoppingCart,
 }: Step1SearchProps) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState(lastSearchTerm);
   const [domain, setDomain] = useState<DomainType | ''>(lastSearchDomain);
   const [results, setResults] = useState<SearchResult[]>(searchResults);
@@ -45,7 +51,6 @@ export default function Step1Search({
   const [textFilter, setTextFilter] = useState<string>('');
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [showStrategyModal, setShowStrategyModal] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,9 +70,6 @@ export default function Step1Search({
     setResults([]);
     setSelectedVocabulary('');
     setSelectedConceptClass('');
-
-    // Show strategy modal immediately when search starts
-    setShowStrategyModal(true);
 
     try {
       const data = await searchConcepts({
@@ -95,8 +97,6 @@ export default function Step1Search({
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
-      // Close modal on error so user can see the error message
-      setShowStrategyModal(false);
     } finally {
       setLoading(false);
     }
@@ -109,19 +109,32 @@ export default function Step1Search({
 
   // Handle "Add to Cart" button click
   const handleAddToCart = (result: SearchResult) => {
+    // For Direct Build: use searched concept ID (the original concept from search)
+    // For Hierarchical Build: use standard concept ID (for hierarchy traversal)
+    const conceptId = workflow === 'direct' ? result.searched_concept_id : result.std_concept_id;
+    const conceptName = workflow === 'direct' ? result.search_result : result.standard_name;
+    const vocabularyId = workflow === 'direct' ? result.searched_vocabulary : result.standard_vocabulary;
+    const conceptClassId = workflow === 'direct' ? result.searched_concept_class_id : result.concept_class_id;
+
     const cartItem: CartItem = {
-      hierarchy_concept_id: result.std_concept_id,
-      concept_name: result.standard_name,
-      vocabulary_id: result.standard_vocabulary,
-      concept_class_id: result.concept_class_id,
+      hierarchy_concept_id: conceptId,
+      concept_name: conceptName,
+      vocabulary_id: vocabularyId,
+      concept_class_id: conceptClassId,
       root_term: result.search_result,
       domain_id: domain as DomainType,
     };
     addToCart(cartItem);
   };
 
+  // Helper to get the correct concept ID based on workflow
+  const getConceptId = (result: SearchResult) => {
+    return workflow === 'direct' ? result.searched_concept_id : result.std_concept_id;
+  };
+
   // Check if item is already in cart
-  const isInCart = (conceptId: number) => {
+  const isInCart = (result: SearchResult) => {
+    const conceptId = getConceptId(result);
     return shoppingCart.some((item) => item.hierarchy_concept_id === conceptId);
   };
 
@@ -140,14 +153,23 @@ export default function Step1Search({
   // Add all filtered results to cart
   const handleAddAllToCart = () => {
     // Collect all items to add
-    const itemsToAdd: CartItem[] = filteredResults.map(result => ({
-      hierarchy_concept_id: result.std_concept_id,
-      concept_name: result.standard_name,
-      vocabulary_id: result.standard_vocabulary,
-      concept_class_id: result.concept_class_id,
-      root_term: result.search_result,
-      domain_id: domain as DomainType,
-    }));
+    const itemsToAdd: CartItem[] = filteredResults.map(result => {
+      // For Direct Build: use searched concept ID (the original concept from search)
+      // For Hierarchical Build: use standard concept ID (for hierarchy traversal)
+      const conceptId = getConceptId(result);
+      const conceptName = workflow === 'direct' ? result.search_result : result.standard_name;
+      const vocabularyId = workflow === 'direct' ? result.searched_vocabulary : result.standard_vocabulary;
+      const conceptClassId = workflow === 'direct' ? result.searched_concept_class_id : result.concept_class_id;
+
+      return {
+        hierarchy_concept_id: conceptId,
+        concept_name: conceptName,
+        vocabulary_id: vocabularyId,
+        concept_class_id: conceptClassId,
+        root_term: result.search_result,
+        domain_id: domain as DomainType,
+      };
+    });
 
     // Add all items to cart at once (duplicate checking happens in parent)
     addMultipleToCart(itemsToAdd);
@@ -156,7 +178,24 @@ export default function Step1Search({
   // Check if all filtered results are in cart
   const areAllFilteredInCart = () => {
     if (filteredResults.length === 0) return false;
-    return filteredResults.every(result => isInCart(result.std_concept_id));
+    return filteredResults.every(result => isInCart(result));
+  };
+
+  // Remove all filtered results from cart
+  const handleRemoveAllFromCart = () => {
+    const conceptIdsToRemove = filteredResults
+      .filter(result => isInCart(result))
+      .map(result => getConceptId(result));
+
+    if (conceptIdsToRemove.length > 0) {
+      removeMultipleFromCart(conceptIdsToRemove);
+    }
+  };
+
+  // Check if any filtered results are in cart
+  const areAnyFilteredInCart = () => {
+    if (filteredResults.length === 0) return false;
+    return filteredResults.some(result => isInCart(result));
   };
 
   // Get unique vocabularies and concept classes from results
@@ -266,11 +305,25 @@ export default function Step1Search({
               required
             >
               <option value="">Select...</option>
-              {DOMAINS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
+              {DOMAINS.map((d) => {
+                // Hierarchical domains: Condition, Drug, Observation
+                // Direct build domains: Procedure, Measurement, Device
+                const isHierarchicalDomain = d === 'Condition' || d === 'Drug' || d === 'Observation';
+                const isEmphasized = workflow === 'hierarchical' ? isHierarchicalDomain : !isHierarchicalDomain;
+
+                return (
+                  <option
+                    key={d}
+                    value={d}
+                    style={{
+                      fontWeight: isEmphasized ? 'bold' : 'normal',
+                      color: isEmphasized ? '#111827' : '#9CA3AF'
+                    }}
+                  >
+                    {d}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -353,88 +406,129 @@ export default function Step1Search({
                         type="text"
                         value={textFilter}
                         onChange={(e) => setTextFilter(e.target.value)}
-                        placeholder="Filter (2+ chars)..."
-                        className="input-field text-xs py-1 px-2 w-40"
+                        placeholder="Filter by name (2+ chars)..."
+                        className="input-field text-xs py-1 px-2 w-48"
                         title="Auto-filters after 2 characters"
                       />
-
-                      <select
-                        value={selectedConceptClass}
-                        onChange={(e) => setSelectedConceptClass(e.target.value)}
-                        className="select-field text-xs py-1 px-2"
-                      >
-                        <option value="">Class: All ({availableConceptClasses.length})</option>
-                        {availableConceptClasses.map((conceptClass) => {
-                          const count = results.filter((r) => r.searched_concept_class_id === conceptClass).length;
-                          return (
-                            <option key={conceptClass} value={conceptClass}>
-                              {conceptClass} ({count})
-                            </option>
-                          );
-                        })}
-                      </select>
 
                       {(selectedVocabulary || selectedConceptClass || textFilter || sortField) && (
                         <button
                           onClick={clearFilters}
                           className="text-xs text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap"
                         >
-                          Clear Filters
+                          Clear All Filters
                         </button>
                       )}
                     </>
                   )}
                 </div>
 
-                {/* Vocabulary Filter Buttons */}
-                {results.length > 1 && availableVocabularies.length > 1 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-gray-700">Vocabulary:</span>
-                    <button
-                      onClick={() => setSelectedVocabulary('')}
-                      className={`text-xs px-2 py-1 rounded transition-colors ${
-                        selectedVocabulary === ''
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      All ({results.length})
-                    </button>
-                    {availableVocabularies.map((vocab) => {
-                      const count = results.filter((r) => r.searched_vocabulary === vocab).length;
-                      return (
+                {/* Vocabulary Filter Pills and Class Dropdown on same line */}
+                {results.length > 1 && (
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {/* Vocabulary Pills */}
+                    {availableVocabularies.length > 1 && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-gray-700">Vocabulary:</span>
                         <button
-                          key={vocab}
-                          onClick={() => setSelectedVocabulary(vocab)}
-                          className={`text-xs px-2 py-1 rounded transition-colors ${
-                            selectedVocabulary === vocab
+                          onClick={() => setSelectedVocabulary('')}
+                          className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                            selectedVocabulary === ''
                               ? 'bg-primary-600 text-white'
                               : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                           }`}
                         >
-                          {vocab} ({count})
+                          All ({results.length})
                         </button>
-                      );
-                    })}
+                        {availableVocabularies.map((vocab) => {
+                          const count = results.filter((r) => r.searched_vocabulary === vocab).length;
+                          return (
+                            <button
+                              key={vocab}
+                              onClick={() => setSelectedVocabulary(vocab)}
+                              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                                selectedVocabulary === vocab
+                                  ? 'bg-primary-600 text-white'
+                                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {vocab} ({count})
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Class Dropdown */}
+                    {availableConceptClasses.length > 1 && (
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="classFilter" className="text-xs font-medium text-gray-700">
+                          Class:
+                        </label>
+                        <select
+                          id="classFilter"
+                          value={selectedConceptClass}
+                          onChange={(e) => setSelectedConceptClass(e.target.value)}
+                          className="text-xs px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        >
+                          <option value="">All Classes ({availableConceptClasses.length})</option>
+                          {availableConceptClasses.map((conceptClass) => {
+                            const count = results.filter((r) => r.searched_concept_class_id === conceptClass).length;
+                            return (
+                              <option key={conceptClass} value={conceptClass}>
+                                {conceptClass} ({count})
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
 
-              {/* Add All button on the right */}
+              {/* Add All / Remove All / Go to Build buttons on the right */}
               {results.length > 1 && (
-                <button
-                  onClick={handleAddAllToCart}
-                  disabled={areAllFilteredInCart()}
-                  className={`text-xs px-3 py-1 whitespace-nowrap flex items-center gap-1 self-start ${
-                    areAllFilteredInCart()
-                      ? 'bg-blue-600 text-white cursor-not-allowed opacity-75'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                  }`}
-                  title={areAllFilteredInCart() ? 'All filtered results in cart' : 'Add all filtered results to cart'}
-                >
-                  <ShoppingCart className="w-3 h-3" />
-                  {areAllFilteredInCart() ? 'All In Cart' : `Add All (${filteredResults.length})`}
-                </button>
+                <div className="flex flex-col gap-2 self-start">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleAddAllToCart}
+                      disabled={areAllFilteredInCart()}
+                      className={`text-xs px-3 py-1 whitespace-nowrap flex items-center gap-1 ${
+                        areAllFilteredInCart()
+                          ? 'bg-blue-600 text-white cursor-not-allowed opacity-75'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                      }`}
+                      title={areAllFilteredInCart() ? 'All filtered results in cart' : 'Add all filtered results to cart'}
+                    >
+                      <ShoppingCart className="w-3 h-3" />
+                      {areAllFilteredInCart() ? 'All In Cart' : `Add All (${filteredResults.length})`}
+                    </button>
+
+                    {areAnyFilteredInCart() && (
+                      <button
+                        onClick={handleRemoveAllFromCart}
+                        className="text-xs px-3 py-1 whitespace-nowrap flex items-center gap-1 bg-white text-red-600 border border-red-300 hover:bg-red-50"
+                        title="Remove all filtered results from cart"
+                      >
+                        <ShoppingCart className="w-3 h-3" />
+                        Remove All
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Go to Build button - shows when cart has items */}
+                  {shoppingCart.length > 0 && (
+                    <button
+                      onClick={() => navigate('/codeset', { state: { buildType: workflow === 'direct' ? 'direct' : 'hierarchical' } })}
+                      className="btn-primary text-xs px-3 py-1.5 whitespace-nowrap flex items-center gap-1 justify-center"
+                      title="Go to build code set"
+                    >
+                      <PackageCheck className="w-3 h-3" />
+                      Go to Build ({shoppingCart.length})
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -443,128 +537,209 @@ export default function Step1Search({
             <table className="table search-results-table text-xs">
               <thead>
                 <tr>
-                  <th
-                    onClick={() => handleSort('standard_name')}
-                    className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[22%]"
-                    title="Click to sort"
-                  >
-                    <div className="flex items-center gap-1">
-                      Standard Name
-                      {sortField === 'standard_name' ? (
-                        sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('standard_vocabulary')}
-                    className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[9%]"
-                    title="Click to sort"
-                  >
-                    <div className="flex items-center gap-1">
-                      Std Vocab
-                      {sortField === 'standard_vocabulary' ? (
-                        sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('concept_class_id')}
-                    className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[11%]"
-                    title="Click to sort"
-                  >
-                    <div className="flex items-center gap-1">
-                      Class
-                      {sortField === 'concept_class_id' ? (
-                        sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('search_result')}
-                    className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[30%]"
-                    title="Click to sort"
-                  >
-                    <div className="flex items-center gap-1">
-                      Search Result
-                      {sortField === 'search_result' ? (
-                        sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('searched_code')}
-                    className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[6%]"
-                    title="Click to sort"
-                  >
-                    <div className="flex items-center gap-1">
-                      Code
-                      {sortField === 'searched_code' ? (
-                        sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('searched_vocabulary')}
-                    className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[9%]"
-                    title="Click to sort"
-                  >
-                    <div className="flex items-center gap-1">
-                      Searched Vocab
-                      {sortField === 'searched_vocabulary' ? (
-                        sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3 opacity-30" />
-                      )}
-                    </div>
-                  </th>
+                  {/* Direct Build: Code, Searched Vocab, Searched Result, Class */}
+                  {/* Hierarchical Build: Standard Name, Std Vocab, Class, Search Result, Code, Searched Vocab */}
+
+                  {workflow === 'direct' ? (
+                    <>
+                      <th
+                        onClick={() => handleSort('searched_code')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[8%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Code
+                          {sortField === 'searched_code' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('searched_vocabulary')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[10%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Searched Vocab
+                          {sortField === 'searched_vocabulary' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('search_result')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[60%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Searched Result
+                          {sortField === 'search_result' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('concept_class_id')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[10%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Class
+                          {sortField === 'concept_class_id' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                    </>
+                  ) : (
+                    <>
+                      <th
+                        onClick={() => handleSort('standard_name')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[22%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Standard Name
+                          {sortField === 'standard_name' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('standard_vocabulary')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[9%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Std Vocab
+                          {sortField === 'standard_vocabulary' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('concept_class_id')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[11%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Class
+                          {sortField === 'concept_class_id' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('search_result')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[30%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Search Result
+                          {sortField === 'search_result' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('searched_code')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[6%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Code
+                          {sortField === 'searched_code' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('searched_vocabulary')}
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[9%]"
+                        title="Click to sort"
+                      >
+                        <div className="flex items-center gap-1">
+                          Searched Vocab
+                          {sortField === 'searched_vocabulary' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                    </>
+                  )}
                   <th className="text-center text-xs py-2 w-[13%]">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredResults.map((result, index) => (
                   <tr key={`${result.std_concept_id}-${index}`} className="text-xs">
-                    <td className="font-medium py-1.5">{result.standard_name || '-'}</td>
-                    <td className="py-1.5">
-                      <span className="badge badge-primary text-xs">{result.standard_vocabulary}</span>
-                    </td>
-                    <td className="text-gray-600 py-1.5">{result.concept_class_id}</td>
-                    <td className="text-gray-700 py-1.5">{result.search_result}</td>
-                    <td className="font-mono py-1.5">{result.searched_code}</td>
-                    <td className="py-1.5">
-                      <span className="badge badge-info text-xs">{result.searched_vocabulary}</span>
-                    </td>
+                    {workflow === 'direct' ? (
+                      <>
+                        <td className="font-mono py-1.5">{result.searched_code}</td>
+                        <td className="py-1.5">
+                          <span className="badge badge-info text-xs">{result.searched_vocabulary}</span>
+                        </td>
+                        <td className="text-gray-700 py-1.5">{result.search_result}</td>
+                        <td className="text-gray-600 py-1.5">{result.searched_concept_class_id}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="font-medium py-1.5">{result.standard_name || '-'}</td>
+                        <td className="py-1.5">
+                          <span className="badge badge-primary text-xs">{result.standard_vocabulary}</span>
+                        </td>
+                        <td className="text-gray-600 py-1.5">{result.concept_class_id}</td>
+                        <td className="text-gray-700 py-1.5">{result.search_result}</td>
+                        <td className="font-mono py-1.5">{result.searched_code}</td>
+                        <td className="py-1.5">
+                          <span className="badge badge-info text-xs">{result.searched_vocabulary}</span>
+                        </td>
+                      </>
+                    )}
                     <td className="py-1.5">
                       <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => handleSeeHierarchy(result)}
-                          className="btn-secondary text-xs px-2 py-1 whitespace-nowrap flex items-center gap-1"
-                          title="View hierarchy and descendants"
-                        >
-                          <GitBranch className="w-3 h-3" />
-                          Hierarchy
-                        </button>
+                        {workflow === 'hierarchical' && (
+                          <button
+                            onClick={() => handleSeeHierarchy(result)}
+                            className="btn-secondary text-xs px-2 py-1 whitespace-nowrap flex items-center gap-1"
+                            title="View hierarchy and descendants"
+                          >
+                            <GitBranch className="w-3 h-3" />
+                            Hierarchy
+                          </button>
+                        )}
                         <button
                           onClick={() => handleAddToCart(result)}
-                          disabled={isInCart(result.std_concept_id)}
+                          disabled={isInCart(result)}
                           className={`text-xs px-2 py-1 whitespace-nowrap flex items-center gap-1 ${
-                            isInCart(result.std_concept_id)
+                            isInCart(result)
                               ? 'bg-blue-600 text-white cursor-not-allowed opacity-75'
                               : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                           }`}
-                          title={isInCart(result.std_concept_id) ? 'Already in cart' : 'Add to cart'}
+                          title={isInCart(result) ? 'Already in cart' : 'Add to cart'}
                         >
                           <ShoppingCart className="w-3 h-3" />
-                          {isInCart(result.std_concept_id) ? 'In Cart' : 'Add'}
+                          {isInCart(result) ? 'In Cart' : 'Add'}
                         </button>
                       </div>
                     </td>
@@ -587,39 +762,6 @@ export default function Step1Search({
       )}
 
       {/* Strategy Modal */}
-      {showStrategyModal && domain && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-            <div className="flex items-start gap-3 mb-4">
-              <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                  {domain} Domain Strategy
-                </h2>
-                <div className="text-sm text-gray-700">
-                  {(domain === 'Condition' || domain === 'Drug' || domain === 'Observation') ? (
-                    <p>
-                      Code Sets for Condition, Drug, and Observation domains effectively leverage the hierarchical nature of the vocabularies. Choose a concept that most closely resembles your search term and click the view hierarchy button.
-                    </p>
-                  ) : (
-                    <p>
-                      For code sets within Procedure, Measurement and Device domains, a good approach is to filter on your vocabulary and key terms and then use the Add or Add All button to add the terms to the shopping cart.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowStrategyModal(false)}
-                className="btn-primary text-sm px-4 py-2"
-              >
-                Got it
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

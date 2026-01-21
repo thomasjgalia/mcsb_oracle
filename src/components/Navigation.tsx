@@ -4,16 +4,18 @@ import AIChatAssistant from './AIChatAssistant';
 import UMLSSearch from './UMLSSearch';
 
 interface NavigationProps {
-  currentStep: 1 | 2 | 3;
-  onStepClick: (step: 1 | 2 | 3) => void;
+  currentStep: 0 | 1 | 2 | 3;
+  workflow: 'direct' | 'hierarchical' | null;
+  onStepClick: (step: 0 | 1 | 2 | 3) => void;
   cartItemCount: number;
   onCartClick: () => void;
 }
 
-export default function Navigation({ currentStep, onStepClick, cartItemCount, onCartClick }: NavigationProps) {
+export default function Navigation({ currentStep, workflow, onStepClick, cartItemCount, onCartClick }: NavigationProps) {
   const navigate = useNavigate();
 
-  const steps = [
+  // Define steps based on workflow
+  const allSteps = [
     {
       number: 1,
       title: 'Search',
@@ -37,8 +39,13 @@ export default function Navigation({ currentStep, onStepClick, cartItemCount, on
     },
   ];
 
+  // Filter steps based on workflow
+  const steps = workflow === 'direct'
+    ? allSteps.filter(step => step.number !== 2) // Skip hierarchy for direct workflow
+    : allSteps;
+
   const handleStepClick = (step: typeof steps[0]) => {
-    onStepClick(step.number as 1 | 2 | 3);
+    onStepClick(step.number as 0 | 1 | 2 | 3);
     navigate(step.path);
   };
 

@@ -8,6 +8,7 @@ import type { CartItem, SearchResult, DomainType } from './lib/types';
 // Components (will be created next)
 import Navigation from './components/Navigation';
 import ShoppingCart from './components/ShoppingCart';
+import Landing from './components/Landing';
 import Step1Search from './components/Step1Search';
 import Step2Hierarchy from './components/Step2Hierarchy';
 import Step3CodeSet from './components/Step3CodeSet';
@@ -22,7 +23,8 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [dbWarming, setDbWarming] = useState(false);
   const [dbReady, setDbReady] = useState(false);
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [workflow, setWorkflow] = useState<'direct' | 'hierarchical' | null>(null);
+  const [currentStep, setCurrentStep] = useState<0 | 1 | 2 | 3>(0);
   const [shoppingCart, setShoppingCart] = useState<CartItem[]>([]);
   const [selectedConcept, setSelectedConcept] = useState<SearchResult | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<DomainType | null>(null);
@@ -79,25 +81,7 @@ function AppContent() {
     return () => subscription.unsubscribe();
   }, [authDisabled]);
 
-  // Warm up database connection after user is authenticated
-  useEffect(() => {
-    if (user && !dbReady && !dbWarming) {
-      setDbWarming(true);
-      checkHealth()
-        .then((result) => {
-          console.log('Database warmup successful:', result);
-          setDbReady(true);
-          setDbWarming(false);
-        })
-        .catch((error) => {
-          console.error('Database warmup failed:', error);
-          // Still mark as ready to prevent infinite loop
-          setDbReady(true);
-          setDbWarming(false);
-          // Don't block the UI, just log the error
-        });
-    }
-  }, [user, dbReady, dbWarming]);
+  // Database warmup moved to Landing component - no longer done here automatically
 
   // Handle loading cart items from navigation state (for edit functionality)
   useEffect(() => {
@@ -128,12 +112,24 @@ function AppContent() {
     setShoppingCart(shoppingCart.filter((item) => item.hierarchy_concept_id !== hierarchyConceptId));
   };
 
+  const removeMultipleFromCart = (conceptIds: number[]) => {
+    const idsToRemove = new Set(conceptIds);
+    setShoppingCart(shoppingCart.filter((item) => !idsToRemove.has(item.hierarchy_concept_id)));
+  };
+
   const clearCart = () => {
     setShoppingCart([]);
   };
 
+  // Workflow selection handler
+  const handleWorkflowSelected = (selectedWorkflow: 'direct' | 'hierarchical') => {
+    setWorkflow(selectedWorkflow);
+    setCurrentStep(1);
+    navigate('/search');
+  };
+
   // Navigation functions
-  const goToStep = (step: 1 | 2 | 3) => {
+  const goToStep = (step: 0 | 1 | 2 | 3) => {
     setCurrentStep(step);
   };
 
@@ -144,32 +140,33 @@ function AppContent() {
     navigate('/hierarchy');
   };
 
+  // Clear Cart - clears cart and returns to Step 1 (preserves search results)
+  const handleClearCart = () => {
+    clearCart();
+    setCurrentStep(1);
+    navigate('/search');
+  };
+
+  // Start Over - returns to workflow selection (clears everything)
+  const handleStartOver = () => {
+    clearCart();
+    setSelectedConcept(null);
+    setSelectedDomain(null);
+    setWorkflow(null);
+    setCurrentStep(0);
+    // Clear search state
+    setSearchResults([]);
+    setLastSearchTerm('');
+    setLastSearchDomain('');
+    navigate('/');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show database warming message
-  if (user && dbWarming) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <h2 className="mt-4 text-xl font-semibold text-gray-900">
-            Connecting to Azure SQL Server
-          </h2>
-          <p className="mt-2 text-gray-600">
-            Please wait while we establish a connection with the database...
-          </p>
-          <p className="mt-2 text-sm text-gray-500">
-            This may take up to a minute if the database was paused.
-          </p>
         </div>
       </div>
     );
@@ -217,12 +214,15 @@ function AppContent() {
         </header>
 
         {/* Navigation Progress Indicator */}
-        <Navigation
-          currentStep={currentStep}
-          onStepClick={goToStep}
-          cartItemCount={shoppingCart.length}
-          onCartClick={() => setIsCartOpen(true)}
-        />
+        {workflow !== null && (
+          <Navigation
+            currentStep={currentStep}
+            workflow={workflow}
+            onStepClick={goToStep}
+            cartItemCount={shoppingCart.length}
+            onCartClick={() => setIsCartOpen(true)}
+          />
+        )}
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -231,40 +231,64 @@ function AppContent() {
             <Routes>
                 <Route
                   path="/"
-                  element={<Navigate to="/search" replace />}
+                  element={
+                    workflow === null ? (
+                      <Landing onSelectWorkflow={handleWorkflowSelected} />
+                    ) : (
+                      <Navigate to="/search" replace />
+                    )
+                  }
                 />
                 <Route
                   path="/search"
                   element={
-                    <Step1Search
-                      onConceptSelected={handleConceptSelected}
-                      currentStep={currentStep}
-                      searchResults={searchResults}
-                      setSearchResults={setSearchResults}
-                      lastSearchTerm={lastSearchTerm}
-                      setLastSearchTerm={setLastSearchTerm}
-                      lastSearchDomain={lastSearchDomain}
-                      setLastSearchDomain={setLastSearchDomain}
-                    />
+                    workflow === null ? (
+                      <Navigate to="/" replace />
+                    ) : (
+                      <Step1Search
+                        onConceptSelected={handleConceptSelected}
+                        currentStep={currentStep}
+                        workflow={workflow}
+                        searchResults={searchResults}
+                        setSearchResults={setSearchResults}
+                        lastSearchTerm={lastSearchTerm}
+                        setLastSearchTerm={setLastSearchTerm}
+                        lastSearchDomain={lastSearchDomain}
+                        setLastSearchDomain={setLastSearchDomain}
+                        addToCart={addToCart}
+                        addMultipleToCart={(items) => {
+                          const existingIds = new Set(shoppingCart.map(item => item.hierarchy_concept_id));
+                          const newItems = items.filter(item => !existingIds.has(item.hierarchy_concept_id));
+                          setShoppingCart([...shoppingCart, ...newItems]);
+                        }}
+                        removeMultipleFromCart={removeMultipleFromCart}
+                        shoppingCart={shoppingCart}
+                      />
+                    )
                   }
                 />
                 <Route
                   path="/hierarchy"
                   element={
-                    <Step2Hierarchy
-                      selectedConcept={selectedConcept}
-                      selectedDomain={selectedDomain}
-                      onAddToCart={addToCart}
-                      onBackToSearch={() => {
-                        setCurrentStep(1);
-                        navigate('/search');
-                      }}
-                      onProceedToCodeSet={() => {
-                        setCurrentStep(3);
-                        navigate('/codeset');
-                      }}
-                      currentStep={currentStep}
-                    />
+                    workflow === 'direct' ? (
+                      <Navigate to="/search" replace />
+                    ) : (
+                      <Step2Hierarchy
+                        selectedConcept={selectedConcept}
+                        selectedDomain={selectedDomain}
+                        shoppingCart={shoppingCart}
+                        onAddToCart={addToCart}
+                        onBackToSearch={() => {
+                          setCurrentStep(1);
+                          navigate('/search');
+                        }}
+                        onProceedToCodeSet={() => {
+                          setCurrentStep(3);
+                          navigate('/codeset');
+                        }}
+                        currentStep={currentStep}
+                      />
+                    )
                   }
                 />
                 <Route
@@ -272,6 +296,7 @@ function AppContent() {
                   element={
                     <Step3CodeSet
                       shoppingCart={shoppingCart}
+                      workflow={workflow}
                       onBackToHierarchy={() => {
                         setCurrentStep(2);
                         navigate('/hierarchy');
@@ -280,14 +305,11 @@ function AppContent() {
                         setCurrentStep(1);
                         navigate('/search');
                       }}
-                      onStartOver={() => {
-                        clearCart();
-                        setSelectedConcept(null);
-                        setSelectedDomain(null);
-                        setCurrentStep(1);
-                        navigate('/search');
-                      }}
+                      onClearCart={handleClearCart}
+                      onStartOver={handleStartOver}
                       currentStep={currentStep}
+                      lastSearchTerm={lastSearchTerm}
+                      lastSearchDomain={lastSearchDomain}
                     />
                   }
                 />
@@ -306,7 +328,11 @@ function AppContent() {
           onClear={clearCart}
           onBuildCodeSet={() => {
             setCurrentStep(3);
-            navigate('/codeset');
+            navigate('/codeset', { state: { buildType: 'hierarchical' } });
+          }}
+          onDirectBuild={() => {
+            setCurrentStep(3);
+            navigate('/codeset', { state: { buildType: 'direct' } });
           }}
           isOpen={isCartOpen}
           onClose={() => setIsCartOpen(false)}

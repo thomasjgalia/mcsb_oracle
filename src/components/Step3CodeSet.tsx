@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { PackageCheck, Loader2, AlertCircle, Download, Copy, CheckCircle, RotateCcw, ArrowLeft, Plus, ChevronDown, ChevronRight, Save } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { PackageCheck, Loader2, AlertCircle, Download, Copy, CheckCircle, RotateCcw, ArrowLeft, Plus, ChevronDown, ChevronRight, Save, X } from 'lucide-react';
 import { buildCodeSet, exportToTxt, exportToSql, saveCodeSet } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import SaveCodeSetModal from './SaveCodeSetModal';
@@ -7,18 +8,27 @@ import type { CartItem, CodeSetResult, ComboFilter } from '../lib/types';
 
 interface Step3CodeSetProps {
   shoppingCart: CartItem[];
+  workflow: 'direct' | 'hierarchical' | null;
   onBackToHierarchy: () => void;
   onBackToSearch: () => void;
+  onClearCart: () => void;
   onStartOver: () => void;
   currentStep: number;
+  lastSearchTerm: string;
+  lastSearchDomain: string;
 }
 
 export default function Step3CodeSet({
   shoppingCart,
+  workflow,
   onBackToHierarchy,
   onBackToSearch,
+  onClearCart,
   onStartOver,
+  lastSearchTerm,
+  lastSearchDomain,
 }: Step3CodeSetProps) {
+  const location = useLocation();
   const [results, setResults] = useState<CodeSetResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +43,25 @@ export default function Step3CodeSet({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [selectedAttribute, setSelectedAttribute] = useState<string>('');
   const [selectedValue, setSelectedValue] = useState<string>('');
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  // Initialize build type from workflow prop (direct workflow = direct build, hierarchical workflow = hierarchical build)
+  const [buildType, setBuildType] = useState<'hierarchical' | 'direct'>(
+    workflow === 'direct' ? 'direct' : 'hierarchical'
+  );
+
+  // Detect domains in cart and recommend build type
+  const cartDomains = Array.from(new Set(shoppingCart.map(item => item.domain_id)));
+  const hasHierarchicalDomains = cartDomains.some(d => d === 'Condition' || d === 'Drug' || d === 'Observation');
+  const hasNonHierarchicalDomains = cartDomains.some(d => d === 'Procedure' || d === 'Measurement' || d === 'Device');
+
+  // Update build type when workflow changes
+  useEffect(() => {
+    if (workflow) {
+      const newBuildType = workflow === 'direct' ? 'direct' : 'hierarchical';
+      console.log('Setting build type from workflow prop:', newBuildType);
+      setBuildType(newBuildType);
+    }
+  }, [workflow]);
 
   // Auto-build when shopping cart is populated (e.g., from editing a saved code set)
   useEffect(() => {
@@ -55,6 +84,7 @@ export default function Step3CodeSet({
       const data = await buildCodeSet({
         concept_ids: conceptIds,
         combo_filter: comboFilter,
+        build_type: buildType,
       });
 
       setResults(data);
@@ -112,6 +142,10 @@ export default function Step3CodeSet({
         description,
         conceptCount: conceptsToSave.length,
         rootConceptsInCart: shoppingCart.length,
+        buildType: buildType,
+        workflow: workflow,
+        firstConcept: conceptsToSave[0],
+        lastConcept: conceptsToSave[conceptsToSave.length - 1],
       });
 
       // Save the built code set (all descendant codes)
@@ -246,10 +280,17 @@ export default function Step3CodeSet({
         <p className="text-xs text-gray-500 mb-3">
           Add concepts from Step 2
         </p>
-        <button onClick={onBackToHierarchy} className="btn-primary text-sm px-3 py-1.5">
-          <ArrowLeft className="w-3 h-3 mr-1.5" />
-          Back to Hierarchy
-        </button>
+        {workflow === 'hierarchical' ? (
+          <button onClick={onBackToHierarchy} className="btn-primary text-sm px-3 py-1.5">
+            <ArrowLeft className="w-3 h-3 mr-1.5" />
+            Back to Hierarchy
+          </button>
+        ) : (
+          <button onClick={onBackToSearch} className="btn-primary text-sm px-3 py-1.5">
+            <ArrowLeft className="w-3 h-3 mr-1.5" />
+            Back to Search
+          </button>
+        )}
       </div>
     );
   }
@@ -260,33 +301,68 @@ export default function Step3CodeSet({
       <div className="card p-2 bg-primary-50 border-primary-200">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900 mb-0.5">
-              Building from {shoppingCart.length} concept{shoppingCart.length !== 1 ? 's' : ''}
-            </h3>
-            <div className="flex flex-wrap gap-1">
-              {shoppingCart.map((item) => (
-                <span key={item.hierarchy_concept_id} className="badge badge-primary text-xs px-2 py-0.5">
-                  {item.concept_name.slice(0, 25)}
-                  {item.concept_name.length > 25 ? '...' : ''}
-                </span>
-              ))}
-            </div>
+            {workflow === 'direct' ? (
+              <>
+                <h3 className="text-sm font-semibold text-gray-900 mb-0.5">
+                  Building Direct from Search
+                </h3>
+                <div className="flex flex-wrap gap-1 items-center">
+                  <span className="text-xs text-gray-700">
+                    Search term: <span className="font-semibold">{lastSearchTerm}</span>
+                  </span>
+                  {lastSearchDomain && (
+                    <>
+                      <span className="text-gray-300">|</span>
+                      <span className="badge badge-primary text-xs px-2 py-0.5">
+                        {lastSearchDomain}
+                      </span>
+                    </>
+                  )}
+                  <span className="text-gray-300">|</span>
+                  <span className="text-xs text-gray-600">
+                    {shoppingCart.length} concept{shoppingCart.length !== 1 ? 's' : ''} selected
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-sm font-semibold text-gray-900 mb-0.5">
+                  Building from {shoppingCart.length} concept{shoppingCart.length !== 1 ? 's' : ''}
+                </h3>
+                <div className="flex flex-wrap gap-1">
+                  {shoppingCart.map((item) => (
+                    <span key={item.hierarchy_concept_id} className="badge badge-primary text-xs px-2 py-0.5">
+                      {item.concept_name.slice(0, 25)}
+                      {item.concept_name.length > 25 ? '...' : ''}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-1">
             <div className="flex gap-1">
-              <button onClick={onBackToHierarchy} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
-                <ArrowLeft className="w-3 h-3" />
-                Back
-              </button>
+              {workflow === 'hierarchical' && (
+                <button onClick={onBackToHierarchy} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
+                  <ArrowLeft className="w-3 h-3" />
+                  Back
+                </button>
+              )}
               <button onClick={onBackToSearch} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
                 <Plus className="w-3 h-3" />
                 Add More
               </button>
             </div>
-            <button onClick={onStartOver} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 text-red-600 hover:text-red-700 whitespace-nowrap">
-              <RotateCcw className="w-3 h-3" />
-              Clear Cart
-            </button>
+            <div className="flex gap-1">
+              <button onClick={onClearCart} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 text-orange-600 hover:text-orange-700 whitespace-nowrap">
+                <RotateCcw className="w-3 h-3" />
+                Clear Cart
+              </button>
+              <button onClick={onStartOver} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 text-red-600 hover:text-red-700 whitespace-nowrap">
+                <X className="w-3 h-3" />
+                Restart Build
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -302,8 +378,48 @@ export default function Step3CodeSet({
             Generate from {shoppingCart.length} selected concept{shoppingCart.length !== 1 ? 's' : ''}
           </p>
 
+          {/* Build Type Selection */}
+          <div className="mb-3 flex justify-center">
+            <div className="inline-flex flex-col items-start">
+              <label htmlFor="buildType" className="block text-xs font-medium text-gray-700 mb-1">
+                Build Type
+              </label>
+              <select
+                id="buildType"
+                value={buildType}
+                onChange={(e) => setBuildType(e.target.value as 'hierarchical' | 'direct')}
+                className="select-field text-sm max-w-xs"
+                disabled={loading}
+              >
+                <option value="hierarchical">Hierarchical (with descendants)</option>
+                <option value="direct">Direct Build (exact concepts only)</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1 max-w-xs text-left">
+                {buildType === 'hierarchical'
+                  ? 'Includes all descendant concepts from the hierarchy'
+                  : 'Returns only the exact concepts in your cart'}
+              </p>
+              {/* Recommendation based on domains */}
+              {hasNonHierarchicalDomains && !hasHierarchicalDomains && (
+                <p className="text-xs text-blue-600 mt-1 max-w-xs text-left">
+                  ℹ️ Direct Build recommended for {cartDomains.join(', ')} domain{cartDomains.length > 1 ? 's' : ''}
+                </p>
+              )}
+              {hasHierarchicalDomains && !hasNonHierarchicalDomains && (
+                <p className="text-xs text-blue-600 mt-1 max-w-xs text-left">
+                  ℹ️ Hierarchical Build recommended for {cartDomains.join(', ')} domain{cartDomains.length > 1 ? 's' : ''}
+                </p>
+              )}
+              {hasHierarchicalDomains && hasNonHierarchicalDomains && (
+                <p className="text-xs text-amber-600 mt-1 max-w-xs text-left">
+                  ⚠️ Mixed domains detected. Choose build type based on your needs.
+                </p>
+              )}
+            </div>
+          </div>
+
           {/* Combo Filter (Drug domain only) */}
-          {shoppingCart.some((item) => item.domain_id === 'Drug') && (
+          {shoppingCart.some((item) => item.domain_id === 'Drug') && buildType === 'hierarchical' && (
             <div className="mb-3 flex justify-center">
               <div className="inline-flex flex-col items-start">
                 <label htmlFor="comboFilter" className="block text-xs font-medium text-gray-700 mb-1">
@@ -332,26 +448,57 @@ export default function Step3CodeSet({
       )}
 
       {/* Rebuild Button (shown after initial build) */}
-      {hasBuilt && !loading && shoppingCart.some((item) => item.domain_id === 'Drug') && (
+      {hasBuilt && !loading && (
         <div className="card p-3">
-          <label htmlFor="comboFilter" className="block text-xs font-medium text-gray-700 mb-1.5">
-            Drug Filter
-          </label>
-          <div className="flex gap-2">
-            <select
-              id="comboFilter"
-              value={comboFilter}
-              onChange={(e) => setComboFilter(e.target.value as ComboFilter)}
-              className="select-field text-sm max-w-xs"
-              disabled={loading}
-            >
-              <option value="ALL">All Drugs</option>
-              <option value="SINGLE">Single Ingredient Only</option>
-              <option value="COMBINATION">Combination Drugs Only</option>
-            </select>
-            <button onClick={buildSet} className="btn-primary text-sm px-4 py-2" disabled={loading}>
-              Rebuild
-            </button>
+          <div className="flex gap-4">
+            {/* Build Type */}
+            <div className="flex-1">
+              <label htmlFor="buildTypeRebuild" className="block text-xs font-medium text-gray-700 mb-1.5">
+                Build Type
+                {hasNonHierarchicalDomains && !hasHierarchicalDomains && (
+                  <span className="text-blue-600 font-normal ml-1">(Direct recommended)</span>
+                )}
+                {hasHierarchicalDomains && !hasNonHierarchicalDomains && (
+                  <span className="text-blue-600 font-normal ml-1">(Hierarchical recommended)</span>
+                )}
+              </label>
+              <select
+                id="buildTypeRebuild"
+                value={buildType}
+                onChange={(e) => setBuildType(e.target.value as 'hierarchical' | 'direct')}
+                className="select-field text-sm w-full"
+                disabled={loading}
+              >
+                <option value="hierarchical">Hierarchical (with descendants)</option>
+                <option value="direct">Direct Build (exact concepts only)</option>
+              </select>
+            </div>
+
+            {/* Drug Filter (Drug domain only, hierarchical only) */}
+            {shoppingCart.some((item) => item.domain_id === 'Drug') && buildType === 'hierarchical' && (
+              <div className="flex-1">
+                <label htmlFor="comboFilterRebuild" className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Drug Filter
+                </label>
+                <select
+                  id="comboFilterRebuild"
+                  value={comboFilter}
+                  onChange={(e) => setComboFilter(e.target.value as ComboFilter)}
+                  className="select-field text-sm w-full"
+                  disabled={loading}
+                >
+                  <option value="ALL">All Drugs</option>
+                  <option value="SINGLE">Single Ingredient Only</option>
+                  <option value="COMBINATION">Combination Drugs Only</option>
+                </select>
+              </div>
+            )}
+
+            <div className="flex items-end">
+              <button onClick={buildSet} className="btn-primary text-sm px-4 py-2" disabled={loading}>
+                Rebuild
+              </button>
+            </div>
           </div>
         </div>
       )}

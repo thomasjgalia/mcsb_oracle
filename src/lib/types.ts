@@ -18,6 +18,7 @@ export interface SearchResult {
   standard_vocabulary: string;
   concept_class_id: string;
   search_result: string;
+  searched_concept_id: number;
   searched_code: string;
   searched_vocabulary: string;
   searched_concept_class_id: string;
@@ -66,6 +67,7 @@ export interface CodeSetResult {
 export interface CodeSetRequest {
   concept_ids: number[];  // Array of HIERARCHY_CONCEPT_IDs from shopping cart
   combo_filter?: ComboFilter;  // Drug domain only
+  build_type?: 'hierarchical' | 'direct';  // Build type: hierarchical (default) or direct
 }
 
 // ============================================================================

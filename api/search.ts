@@ -139,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ON s.concept_id = cr.concept_id_2
          AND s.standard_concept = 'S'
       )
-      SELECT TOP 75
+      SELECT TOP 1000
         -- Prefer mapped standard target if present; otherwise use searched concept
         COALESCE(
           s_concept_name,
@@ -173,6 +173,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         -- Echo the searched concept context
         concept_name         AS search_result,
+        concept_id           AS searched_concept_id,
         concept_code         AS searched_code,
         vocabulary_id        AS searched_vocabulary,
         concept_class_id     AS searched_concept_class_id,

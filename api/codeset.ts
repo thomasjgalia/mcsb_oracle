@@ -13,6 +13,7 @@ import {
 interface CodeSetRequest {
   concept_ids: number[];
   combo_filter?: 'ALL' | 'SINGLE' | 'COMBINATION';
+  build_type?: 'hierarchical' | 'direct';
 }
 
 interface CodeSetResult {
@@ -41,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { concept_ids, combo_filter = 'ALL' } = req.body as CodeSetRequest;
+    const { concept_ids, combo_filter = 'ALL', build_type = 'hierarchical' } = req.body as CodeSetRequest;
 
     // Validate input
     if (!concept_ids || !Array.isArray(concept_ids) || concept_ids.length === 0) {
@@ -54,6 +55,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Execute query for each concept and combine results
     const allResults: CodeSetResult[] = [];
 
+    // Handle Direct Build (no hierarchical expansion)
+    if (build_type === 'direct') {
+      const startTime = Date.now();
+      console.log(`🚀 Direct Build: Starting for ${concept_ids.length} concepts`);
+
+      const placeholders = concept_ids.map((_, i) => `@concept_id${i}`).join(',');
+      const parameters: Record<string, number> = {};
+      concept_ids.forEach((id, i) => {
+        parameters[`concept_id${i}`] = id;
+      });
+
+      const directSQL = `
+        SELECT
+          C.CONCEPT_NAME                      AS root_concept_name,
+          C.VOCABULARY_ID                     AS child_vocabulary_id,
+          C.CONCEPT_CODE                      AS child_code,
+          C.CONCEPT_NAME                      AS child_name,
+          C.CONCEPT_ID                        AS child_concept_id,
+          C.CONCEPT_CLASS_ID                  AS concept_class_id,
+          NULL                                AS combinationyesno,
+          NULL                                AS dose_form,
+          NULL                                AS dfg_name,
+          NULL                                AS concept_attribute,
+          NULL                                AS value
+        FROM CONCEPT C
+        WHERE C.CONCEPT_ID IN (${placeholders})
+        ORDER BY C.VOCABULARY_ID, C.CONCEPT_CODE
+      `;
+
+      console.log(`📊 Direct Build: Executing single query with IN clause for ${concept_ids.length} IDs`);
+      console.log('🔍 SQL Query:', directSQL);
+      console.log('🔍 Parameters:', parameters);
+      const results = await executeQuery<CodeSetResult>(directSQL, parameters);
+      allResults.push(...results);
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ Direct Build: Completed in ${duration}ms - returned ${results.length} results`);
+
+      return res.status(200).json({
+        success: true,
+        data: allResults,
+      });
+    }
+
+    // Handle Hierarchical Build (existing logic)
     for (const conceptId of concept_ids) {
       // Get domain for this concept
       const domainSQL = `SELECT domain_id FROM concept WHERE concept_id = @concept_id`;
