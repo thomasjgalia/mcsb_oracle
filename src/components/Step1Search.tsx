@@ -534,7 +534,7 @@ export default function Step1Search({
           </div>
 
           <div className="table-container">
-            <table className="table search-results-table text-xs">
+            <table className="table search-results-table text-xs" style={{ tableLayout: 'fixed', width: '100%' }}>
               <thead>
                 <tr>
                   {/* Direct Build: Code, Searched Vocab, Searched Result, Class */}
@@ -544,7 +544,8 @@ export default function Step1Search({
                     <>
                       <th
                         onClick={() => handleSort('searched_code')}
-                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[8%]"
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2"
+                        style={{ width: '8%' }}
                         title="Click to sort"
                       >
                         <div className="flex items-center gap-1">
@@ -558,7 +559,8 @@ export default function Step1Search({
                       </th>
                       <th
                         onClick={() => handleSort('searched_vocabulary')}
-                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[10%]"
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2"
+                        style={{ width: '10%' }}
                         title="Click to sort"
                       >
                         <div className="flex items-center gap-1">
@@ -572,7 +574,8 @@ export default function Step1Search({
                       </th>
                       <th
                         onClick={() => handleSort('search_result')}
-                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[60%]"
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2"
+                        style={{ width: '60%' }}
                         title="Click to sort"
                       >
                         <div className="flex items-center gap-1">
@@ -586,7 +589,8 @@ export default function Step1Search({
                       </th>
                       <th
                         onClick={() => handleSort('concept_class_id')}
-                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2 w-[10%]"
+                        className="cursor-pointer hover:bg-gray-100 select-none text-xs py-2"
+                        style={{ width: '10%' }}
                         title="Click to sort"
                       >
                         <div className="flex items-center gap-1">
@@ -687,7 +691,7 @@ export default function Step1Search({
                       </th>
                     </>
                   )}
-                  <th className="text-center text-xs py-2 w-[13%]">Actions</th>
+                  <th className="text-center text-xs py-2" style={{ width: '12%' }}>Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
