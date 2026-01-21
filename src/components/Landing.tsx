@@ -1,28 +1,12 @@
-import { useEffect, useState } from 'react';
 import { Zap, PackageCheck, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import { testConnection } from '../lib/api';
 
 interface LandingProps {
   onSelectWorkflow: (workflow: 'direct' | 'hierarchical') => void;
+  connectionStatus: 'connecting' | 'connected' | 'error';
+  errorMessage?: string;
 }
 
-export default function Landing({ onSelectWorkflow }: LandingProps) {
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
-  const [errorMessage, setErrorMessage] = useState<string>('');
-
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        await testConnection();
-        setConnectionStatus('connected');
-      } catch (error) {
-        setConnectionStatus('error');
-        setErrorMessage(error instanceof Error ? error.message : 'Failed to connect to database');
-      }
-    };
-
-    checkConnection();
-  }, []);
+export default function Landing({ onSelectWorkflow, connectionStatus, errorMessage = '' }: LandingProps) {
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
-import { upsertUserProfile } from './lib/api';
+import { upsertUserProfile, testConnection } from './lib/api';
 import type { User } from '@supabase/supabase-js';
 import type { CartItem, SearchResult, DomainType } from './lib/types';
 
@@ -21,6 +21,8 @@ function AppContent() {
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dbConnectionStatus, setDbConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [dbErrorMessage, setDbErrorMessage] = useState<string>('');
   const [workflow, setWorkflow] = useState<'direct' | 'hierarchical' | null>(null);
   const [currentStep, setCurrentStep] = useState<0 | 1 | 2 | 3>(0);
   const [shoppingCart, setShoppingCart] = useState<CartItem[]>([]);
@@ -79,7 +81,21 @@ function AppContent() {
     return () => subscription.unsubscribe();
   }, [authDisabled]);
 
-  // Database warmup moved to Landing component - no longer done here automatically
+  // Check database connection once on app startup
+  useEffect(() => {
+    const checkDbConnection = async () => {
+      try {
+        await testConnection();
+        setDbConnectionStatus('connected');
+      } catch (error) {
+        console.error('Database connection failed:', error);
+        setDbConnectionStatus('error');
+        setDbErrorMessage(error instanceof Error ? error.message : 'Failed to connect to database');
+      }
+    };
+
+    checkDbConnection();
+  }, []); // Empty dependency array - only runs once on mount
 
   // Handle loading cart items from navigation state (for edit functionality)
   useEffect(() => {
@@ -232,7 +248,11 @@ function AppContent() {
                   path="/"
                   element={
                     workflow === null ? (
-                      <Landing onSelectWorkflow={handleWorkflowSelected} />
+                      <Landing
+                        onSelectWorkflow={handleWorkflowSelected}
+                        connectionStatus={dbConnectionStatus}
+                        errorMessage={dbErrorMessage}
+                      />
                     ) : (
                       <Navigate to="/search" replace />
                     )
