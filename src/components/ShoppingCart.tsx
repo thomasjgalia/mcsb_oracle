@@ -24,8 +24,8 @@ export default function ShoppingCart({
 
   // Detect domains in cart to recommend build type
   const cartDomains = Array.from(new Set(items.map(item => item.domain_id)));
-  const hasHierarchicalDomains = cartDomains.some(d => d === 'Condition' || d === 'Drug' || d === 'Observation');
-  const hasNonHierarchicalDomains = cartDomains.some(d => d === 'Procedure' || d === 'Measurement' || d === 'Device');
+  const hasHierarchicalDomains = cartDomains.some(d => d === 'Condition' || d === 'Drug');
+  const hasNonHierarchicalDomains = cartDomains.some(d => d === 'Procedure' || d === 'Measurement' || d === 'Observation' || d === 'Device');
 
   // Determine recommended build type
   const recommendDirect = hasNonHierarchicalDomains && !hasHierarchicalDomains;

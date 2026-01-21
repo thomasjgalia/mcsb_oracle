@@ -19,6 +19,7 @@ interface Step1SearchProps {
   lastSearchDomain: DomainType | '';
   setLastSearchDomain: (domain: DomainType | '') => void;
   addToCart: (item: CartItem) => void;
+  removeFromCart: (hierarchyConceptId: number) => void;
   addMultipleToCart: (items: CartItem[]) => void;
   removeMultipleFromCart: (conceptIds: number[]) => void;
   shoppingCart: CartItem[];
@@ -36,6 +37,7 @@ export default function Step1Search({
   lastSearchDomain,
   setLastSearchDomain,
   addToCart,
+  removeFromCart,
   addMultipleToCart,
   removeMultipleFromCart,
   shoppingCart,
@@ -107,11 +109,19 @@ export default function Step1Search({
     onConceptSelected(result, domain as DomainType);
   };
 
-  // Handle "Add to Cart" button click
+  // Handle "Add to Cart" button click - toggles between add and remove
   const handleAddToCart = (result: SearchResult) => {
     // For Direct Build: use searched concept ID (the original concept from search)
     // For Hierarchical Build: use standard concept ID (for hierarchy traversal)
     const conceptId = workflow === 'direct' ? result.searched_concept_id : result.std_concept_id;
+
+    // If already in cart, remove it
+    if (isInCart(result)) {
+      removeFromCart(conceptId);
+      return;
+    }
+
+    // Otherwise, add to cart
     const conceptName = workflow === 'direct' ? result.search_result : result.standard_name;
     const vocabularyId = workflow === 'direct' ? result.searched_vocabulary : result.standard_vocabulary;
     const conceptClassId = workflow === 'direct' ? result.searched_concept_class_id : result.concept_class_id;
@@ -306,9 +316,9 @@ export default function Step1Search({
             >
               <option value="">Select...</option>
               {DOMAINS.map((d) => {
-                // Hierarchical domains: Condition, Drug, Observation
-                // Direct build domains: Procedure, Measurement, Device
-                const isHierarchicalDomain = d === 'Condition' || d === 'Drug' || d === 'Observation';
+                // Hierarchical domains: Condition, Drug
+                // Direct build domains: Procedure, Measurement, Observation, Device
+                const isHierarchicalDomain = d === 'Condition' || d === 'Drug';
                 const isEmphasized = workflow === 'hierarchical' ? isHierarchicalDomain : !isHierarchicalDomain;
 
                 return (
@@ -364,13 +374,13 @@ export default function Step1Search({
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="text-xs text-blue-900">
-              {(domain === 'Condition' || domain === 'Drug' || domain === 'Observation') ? (
+              {(domain === 'Condition' || domain === 'Drug') ? (
                 <p>
-                  Code Sets for Condition, Drug, and Observation domains effectively leverage the hierarchical nature of the vocabularies. Choose a concept that most closely resembles your search term and click the view hierarchy button.
+                  Code Sets for Condition and Drug domains effectively leverage the hierarchical nature of the vocabularies. Choose a concept that most closely resembles your search term and click the view hierarchy button.
                 </p>
               ) : (
                 <p>
-                  For code sets within Procedure, Measurement and Device domains, a good approach is to filter on your vocabulary and key terms and then use the Add or Add All button to add the terms to the shopping cart.
+                  For code sets within Procedure, Measurement, Observation and Device domains, a good approach is to filter on your vocabulary and key terms and then use the Add or Add All button to add the terms to the shopping cart.
                 </p>
               )}
             </div>
@@ -734,13 +744,12 @@ export default function Step1Search({
                         )}
                         <button
                           onClick={() => handleAddToCart(result)}
-                          disabled={isInCart(result)}
-                          className={`text-xs px-2 py-1 whitespace-nowrap flex items-center gap-1 ${
+                          className={`text-xs px-2 py-1 whitespace-nowrap flex items-center gap-1 transition-colors ${
                             isInCart(result)
-                              ? 'bg-blue-600 text-white cursor-not-allowed opacity-75'
+                              ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
                               : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                           }`}
-                          title={isInCart(result) ? 'Already in cart' : 'Add to cart'}
+                          title={isInCart(result) ? 'Click to remove from cart' : 'Add to cart'}
                         >
                           <ShoppingCart className="w-3 h-3" />
                           {isInCart(result) ? 'In Cart' : 'Add'}

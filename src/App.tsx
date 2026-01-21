@@ -275,6 +275,7 @@ function AppContent() {
                         lastSearchDomain={lastSearchDomain}
                         setLastSearchDomain={setLastSearchDomain}
                         addToCart={addToCart}
+                        removeFromCart={removeFromCart}
                         addMultipleToCart={(items) => {
                           const existingIds = new Set(shoppingCart.map(item => item.hierarchy_concept_id));
                           const newItems = items.filter(item => !existingIds.has(item.hierarchy_concept_id));
