@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GitBranch, Loader2, AlertCircle, Plus, ArrowLeft, CheckCircle, RotateCw, PackageCheck } from 'lucide-react';
+import { GitBranch, Loader2, AlertCircle, Plus, ArrowLeft, CheckCircle, RotateCw, PackageCheck, ChevronDown, ChevronRight } from 'lucide-react';
 import { getHierarchy } from '../lib/api';
 import type { SearchResult, HierarchyResult, CartItem, DomainType } from '../lib/types';
 
@@ -28,6 +28,8 @@ export default function Step2Hierarchy({
   const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
   const [selectedConceptClass, setSelectedConceptClass] = useState<string>('');
   const [currentAnchorId, setCurrentAnchorId] = useState<number | null>(null);
+  const [isAncestorsCollapsed, setIsAncestorsCollapsed] = useState(true);
+  const [isDescendantsCollapsed, setIsDescendantsCollapsed] = useState(true);
 
   useEffect(() => {
     if (selectedConcept && currentStep === 2) {
@@ -215,11 +217,20 @@ export default function Step2Hierarchy({
           {/* Parents (Ancestors) */}
           {parents.length > 0 && (
             <div className="card p-3">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-1.5">
+              <button
+                onClick={() => setIsAncestorsCollapsed(!isAncestorsCollapsed)}
+                className="w-full flex items-center gap-1.5 text-sm font-semibold text-gray-900 mb-2 hover:text-primary-600 transition-colors"
+              >
+                {isAncestorsCollapsed ? (
+                  <ChevronRight className="w-4 h-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                )}
                 <GitBranch className="w-4 h-4 text-blue-600" />
                 Ancestors ({parents.length})
-              </h3>
-              <div className="table-container">
+              </button>
+              {!isAncestorsCollapsed && (
+                <div className="table-container">
                 <table className="table compact-table">
                   <thead>
                     <tr>
@@ -287,6 +298,7 @@ export default function Step2Hierarchy({
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           )}
 
@@ -371,11 +383,20 @@ export default function Step2Hierarchy({
           {/* Children (Descendants) */}
           {children.length > 0 && (
             <div className="card p-3">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-1.5">
+              <button
+                onClick={() => setIsDescendantsCollapsed(!isDescendantsCollapsed)}
+                className="w-full flex items-center gap-1.5 text-sm font-semibold text-gray-900 mb-2 hover:text-primary-600 transition-colors"
+              >
+                {isDescendantsCollapsed ? (
+                  <ChevronRight className="w-4 h-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                )}
                 <GitBranch className="w-4 h-4 text-green-600 transform rotate-180" />
                 Descendants ({children.length})
-              </h3>
-              <div className="table-container">
+              </button>
+              {!isDescendantsCollapsed && (
+                <div className="table-container">
                 <table className="table compact-table">
                   <thead>
                     <tr>
@@ -443,6 +464,7 @@ export default function Step2Hierarchy({
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           )}
         </div>
