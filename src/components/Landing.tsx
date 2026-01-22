@@ -14,7 +14,7 @@ export default function Landing({ onSelectWorkflow, connectionStatus, errorMessa
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            MCSB Oracle Code Set Builder
+            Medical Code Set Builder
           </h1>
           <p className="text-lg text-gray-600">
             What type of code set are you building?
