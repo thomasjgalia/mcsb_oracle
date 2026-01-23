@@ -18,6 +18,8 @@ import type {
   SearchHistoryRecord,
   UMLSSearchRequest,
   UMLSSearchResponse,
+  LabTestSearchRequest,
+  LabTestSearchResult,
 } from './types';
 
 // In development with Vercel Dev, API routes are served on the same origin
@@ -92,6 +94,28 @@ export const searchConcepts = async (
 
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.error || 'Search failed');
+    }
+
+    return response.data.data;
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+// ============================================================================
+// Lab Test Search (Measurement Domain)
+// ============================================================================
+export const searchLabTests = async (
+  request: LabTestSearchRequest
+): Promise<LabTestSearchResult[]> => {
+  try {
+    const response = await apiClient.post<ApiResponse<LabTestSearchResult[]>>(
+      '/api/labtest-search',
+      request
+    );
+
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Lab test search failed');
     }
 
     return response.data.data;

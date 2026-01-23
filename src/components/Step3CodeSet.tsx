@@ -7,9 +7,12 @@ import type { CartItem, CodeSetResult, ComboFilter } from '../lib/types';
 
 interface Step3CodeSetProps {
   shoppingCart: CartItem[];
-  workflow: 'direct' | 'hierarchical' | null;
+  workflow: 'direct' | 'hierarchical' | 'labtest' | null;
   onBackToHierarchy: () => void;
   onBackToSearch: () => void;
+  onSwitchToHierarchical: () => void;
+  onSwitchToDirect: () => void;
+  onSwitchToLabTest: () => void;
   onClearCart: () => void;
   onStartOver: () => void;
   currentStep: number;
@@ -22,6 +25,9 @@ export default function Step3CodeSet({
   workflow,
   onBackToHierarchy,
   onBackToSearch,
+  onSwitchToHierarchical,
+  onSwitchToDirect,
+  onSwitchToLabTest,
   onClearCart,
   onStartOver,
   lastSearchTerm,
@@ -41,15 +47,15 @@ export default function Step3CodeSet({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [selectedAttribute, setSelectedAttribute] = useState<string>('');
   const [selectedValue, setSelectedValue] = useState<string>('');
-  // Initialize build type from workflow prop (direct workflow = direct build, hierarchical workflow = hierarchical build)
-  const [buildType, setBuildType] = useState<'hierarchical' | 'direct'>(
-    workflow === 'direct' ? 'direct' : 'hierarchical'
+  // Initialize build type from workflow prop (direct workflow = direct build, hierarchical workflow = hierarchical build, labtest workflow = labtest build)
+  const [buildType, setBuildType] = useState<'hierarchical' | 'direct' | 'labtest'>(
+    workflow === 'direct' ? 'direct' : workflow === 'labtest' ? 'labtest' : 'hierarchical'
   );
 
   // Update build type when workflow changes
   useEffect(() => {
     if (workflow) {
-      const newBuildType = workflow === 'direct' ? 'direct' : 'hierarchical';
+      const newBuildType = workflow === 'direct' ? 'direct' : workflow === 'labtest' ? 'labtest' : 'hierarchical';
       console.log('Setting build type from workflow prop:', newBuildType);
       setBuildType(newBuildType);
     }
@@ -293,10 +299,10 @@ export default function Step3CodeSet({
       <div className="card p-2 bg-primary-50 border-primary-200">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
-            {workflow === 'direct' ? (
+            {(workflow === 'direct' || workflow === 'labtest') ? (
               <>
                 <h3 className="text-sm font-semibold text-gray-900 mb-0.5">
-                  Building Direct from Search
+                  Building {workflow === 'labtest' ? 'Lab Test' : 'Direct'} from Search
                 </h3>
                 <div className="flex flex-wrap gap-1 items-center">
                   <span className="text-xs text-gray-700">
@@ -340,9 +346,17 @@ export default function Step3CodeSet({
                   Back
                 </button>
               )}
-              <button onClick={onBackToSearch} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
+              <button onClick={onSwitchToHierarchical} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
                 <Plus className="w-3 h-3" />
-                Add More
+                Add using Hierarchy
+              </button>
+              <button onClick={onSwitchToDirect} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
+                <Plus className="w-3 h-3" />
+                Add Direct
+              </button>
+              <button onClick={onSwitchToLabTest} className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-1.5 whitespace-nowrap">
+                <Plus className="w-3 h-3" />
+                Add Lab Test
               </button>
             </div>
             <div className="flex gap-1">

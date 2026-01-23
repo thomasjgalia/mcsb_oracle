@@ -144,7 +144,7 @@ export default function ShoppingCart({
                 <p className="text-xs text-blue-800">
                   {recommendDirect && (
                     <>
-                      <strong>Direct Build recommended</strong> for {cartDomains.join(', ')} domain{cartDomains.length > 1 ? 's' : ''}
+                      <strong>Direct/Lab Build recommended</strong> for {cartDomains.join(', ')} domain{cartDomains.length > 1 ? 's' : ''}
                     </>
                   )}
                   {recommendHierarchical && (
@@ -179,7 +179,7 @@ export default function ShoppingCart({
                 >
                   <Zap className="w-4 h-4" />
                   <span className="text-sm">
-                    Direct Build
+                    Direct/Lab Build
                     {recommendDirect && <span className="ml-1">✓</span>}
                   </span>
                 </button>

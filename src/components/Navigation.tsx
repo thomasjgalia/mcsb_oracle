@@ -5,7 +5,7 @@ import UMLSSearch from './UMLSSearch';
 
 interface NavigationProps {
   currentStep: 0 | 1 | 2 | 3;
-  workflow: 'direct' | 'hierarchical' | null;
+  workflow: 'direct' | 'hierarchical' | 'labtest' | null;
   onStepClick: (step: 0 | 1 | 2 | 3) => void;
   cartItemCount: number;
   onCartClick: () => void;
@@ -41,8 +41,8 @@ export default function Navigation({ currentStep, workflow, onStepClick, cartIte
   ];
 
   // Filter steps based on workflow
-  const steps = workflow === 'direct'
-    ? allSteps.filter(step => step.number !== 2) // Skip hierarchy for direct workflow
+  const steps = (workflow === 'direct' || workflow === 'labtest')
+    ? allSteps.filter(step => step.number !== 2) // Skip hierarchy for direct and labtest workflows
     : allSteps;
 
   const handleStepClick = (step: typeof steps[0]) => {
@@ -50,10 +50,33 @@ export default function Navigation({ currentStep, workflow, onStepClick, cartIte
     navigate(step.path);
   };
 
+  // Get workflow badge text and color
+  const getWorkflowBadge = () => {
+    if (workflow === 'hierarchical') {
+      return { text: 'Hierarchical Build', color: 'bg-blue-100 text-blue-800' };
+    } else if (workflow === 'direct') {
+      return { text: 'Direct Build', color: 'bg-green-100 text-green-800' };
+    } else if (workflow === 'labtest') {
+      return { text: 'Lab Test Build', color: 'bg-purple-100 text-purple-800' };
+    }
+    return null;
+  };
+
+  const workflowBadge = getWorkflowBadge();
+
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-2">
+          {/* Workflow Badge */}
+          {workflowBadge && (
+            <div className="mr-3">
+              <span className={`px-2 py-1 rounded-md text-xs font-semibold ${workflowBadge.color}`}>
+                {workflowBadge.text}
+              </span>
+            </div>
+          )}
+
           {/* Step Navigation */}
           <div className="flex items-center space-x-2 overflow-x-auto flex-1">
             {steps.map((step, index) => (

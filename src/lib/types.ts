@@ -5,8 +5,14 @@
 // Domain types for medical concepts
 export type DomainType = 'Condition' | 'Drug' | 'Procedure' | 'Measurement' | 'Observation' | 'Device';
 
+// Workflow types
+export type WorkflowType = 'direct' | 'hierarchical' | 'labtest';
+
 // Combination filter for Drug domain
 export type ComboFilter = 'ALL' | 'SINGLE' | 'COMBINATION';
+
+// Lab Test Type filter
+export type LabTestType = 'ALL' | 'Lab Test' | 'Panel';
 
 // ============================================================================
 // Step 1: Search Results
@@ -28,6 +34,26 @@ export interface SearchResult {
 export interface SearchRequest {
   searchterm: string;
   domain_id: DomainType;
+}
+
+// ============================================================================
+// Lab Test Search Results (Measurement Domain)
+// ============================================================================
+export interface LabTestSearchResult {
+  lab_test_type: string;           // 'Lab Test' or 'Panel'
+  term_concept: number;             // Concept ID
+  search_result: string;            // Concept Name
+  searched_code: string;            // Concept Code
+  searched_concept_class_id: string; // Concept Class
+  vocabulary_id: string;            // LOINC, CPT4, HCPCS
+  property: string | null;          // What's being measured
+  scale: string | null;             // Quantitative, Ordinal, etc.
+  system: string | null;            // Blood, Urine, etc.
+  time: string | null;              // Point in time, 24h, etc.
+}
+
+export interface LabTestSearchRequest {
+  searchterm: string;
 }
 
 // ============================================================================
@@ -67,7 +93,7 @@ export interface CodeSetResult {
 export interface CodeSetRequest {
   concept_ids: number[];  // Array of HIERARCHY_CONCEPT_IDs from shopping cart
   combo_filter?: ComboFilter;  // Drug domain only
-  build_type?: 'hierarchical' | 'direct';  // Build type: hierarchical (default) or direct
+  build_type?: 'hierarchical' | 'direct' | 'labtest';  // Build type: hierarchical (default), direct, or labtest
 }
 
 // ============================================================================

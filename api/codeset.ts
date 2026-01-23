@@ -13,7 +13,7 @@ import {
 interface CodeSetRequest {
   concept_ids: number[];
   combo_filter?: 'ALL' | 'SINGLE' | 'COMBINATION';
-  build_type?: 'hierarchical' | 'direct';
+  build_type?: 'hierarchical' | 'direct' | 'labtest';
 }
 
 interface CodeSetResult {
@@ -73,6 +73,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Execute query for each concept and combine results
     const allResults: CodeSetResult[] = [];
+
+    // Handle Lab Test Build (same as Direct Build - no hierarchical expansion)
+    if (build_type === 'labtest') {
+      const startTime = Date.now();
+      console.log(`🧪 Lab Test Build: Starting for ${concept_ids.length} concepts`);
+
+      const placeholders = concept_ids.map((_, i) => `@concept_id${i}`).join(',');
+      const parameters: Record<string, number> = {};
+      concept_ids.forEach((id, i) => {
+        parameters[`concept_id${i}`] = id;
+      });
+
+      const labtestSQL = `
+        SELECT
+          C.CONCEPT_NAME                      AS root_concept_name,
+          C.VOCABULARY_ID                     AS child_vocabulary_id,
+          C.CONCEPT_CODE                      AS child_code,
+          C.CONCEPT_NAME                      AS child_name,
+          C.CONCEPT_ID                        AS child_concept_id,
+          C.CONCEPT_CLASS_ID                  AS concept_class_id,
+          NULL                                AS combinationyesno,
+          NULL                                AS dose_form,
+          NULL                                AS dfg_name,
+          NULL                                AS concept_attribute,
+          NULL                                AS value
+        FROM CONCEPT C
+        WHERE C.CONCEPT_ID IN (${placeholders})
+        ORDER BY C.VOCABULARY_ID, C.CONCEPT_CODE
+      `;
+
+      console.log(`📊 Lab Test Build: Executing single query with IN clause for ${concept_ids.length} IDs`);
+      const results = await executeQuery<CodeSetResult>(labtestSQL, parameters);
+      allResults.push(...results);
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ Lab Test Build: Completed in ${duration}ms - returned ${results.length} results`);
+
+      // Deduplicate results based on vocabulary, code, name, concept_id, and class
+      const deduped = deduplicateResults(allResults);
+      console.log(`🔄 Lab Test Build: Deduplicated from ${allResults.length} to ${deduped.length} unique concepts`);
+
+      return res.status(200).json({
+        success: true,
+        data: deduped,
+      });
+    }
 
     // Handle Direct Build (no hierarchical expansion)
     if (build_type === 'direct') {
