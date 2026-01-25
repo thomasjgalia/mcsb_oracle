@@ -16,7 +16,7 @@ interface LabTestSearchRequest {
 
 interface LabTestSearchResult {
   lab_test_type: string;
-  term_concept: number;
+  std_concept_id: number;
   search_result: string;
   searched_code: string;
   searched_concept_class_id: string;
@@ -25,6 +25,7 @@ interface LabTestSearchResult {
   scale: string | null;
   system: string | null;
   time: string | null;
+  panel_count: number;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -48,12 +49,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate input - allow empty searchterm for full list
     const searchValue = searchterm?.trim() || '';
 
-    // Build the SQL query (converted from Snowflake to T-SQL)
+    // Build the SQL query (simplified from Labs_Step-1_LabTest_Only.sql)
     const sql = `
       WITH base AS (
-        -- Scope from the start: Measurement domain, LOINC/CPT4/HCPCS vocabularies
+        -- Scope from the start: Measurement domain, LOINC/CPT4/HCPCS/SNOMED vocabularies
         SELECT
-          CONCEPT_ID,
+          CONCEPT_ID std_concept_id,
           CONCEPT_NAME,
           CONCEPT_CODE,
           CONCEPT_CLASS_ID,
@@ -68,47 +69,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             OR (VOCABULARY_ID = 'HCPCS' AND CONCEPT_CLASS_ID = 'HCPCS')
           )
           AND (
-            @searchterm = ''
-            OR UPPER(CAST(CONCEPT_ID AS NVARCHAR(30)) + ' ' + CONCEPT_CODE + ' ' + CONCEPT_NAME)
-               LIKE '%' + UPPER(@searchterm) + '%'
-          )
+            CONVERT(varchar(50), CONCEPT_ID) + ' ' + UPPER(CONCEPT_CODE) + ' ' + UPPER(CONCEPT_NAME)
+          ) LIKE '%' + UPPER(@searchterm) + '%'
       ),
       prop AS (
-        SELECT CONCEPT_ID_1, CONCEPT_ID_2
-        FROM CONCEPT_RELATIONSHIP
+        SELECT CONCEPT_ID_1 std_concept_id, CONCEPT_ID_2
+        FROM CONCEPT_RELATIONSHIP JOIN base ON base.std_concept_id = CONCEPT_ID_1
         WHERE RELATIONSHIP_ID = 'Has property'
       ),
       scale AS (
-        SELECT CONCEPT_ID_1, CONCEPT_ID_2
-        FROM CONCEPT_RELATIONSHIP
+        SELECT CONCEPT_ID_1 std_concept_id, CONCEPT_ID_2
+        FROM CONCEPT_RELATIONSHIP JOIN base ON base.std_concept_id = CONCEPT_ID_1
         WHERE RELATIONSHIP_ID = 'Has scale type'
       ),
       sys AS (
-        SELECT CONCEPT_ID_1, CONCEPT_ID_2
-        FROM CONCEPT_RELATIONSHIP
+        SELECT CONCEPT_ID_1 std_concept_id, CONCEPT_ID_2
+        FROM CONCEPT_RELATIONSHIP JOIN base ON base.std_concept_id = CONCEPT_ID_1
         WHERE RELATIONSHIP_ID = 'Has system'
       ),
       tm AS (
-        SELECT CONCEPT_ID_1, CONCEPT_ID_2
-        FROM CONCEPT_RELATIONSHIP
+        SELECT CONCEPT_ID_1 std_concept_id, CONCEPT_ID_2
+        FROM CONCEPT_RELATIONSHIP JOIN base ON base.std_concept_id = CONCEPT_ID_1
         WHERE RELATIONSHIP_ID = 'Has time aspect'
       ),
-      panel AS (
-        -- For each lab test (concept_id_1), get the panel concept (concept_id_2)
+      panels AS (
+        -- Count how many panels contain each lab test
         SELECT
-          CR.CONCEPT_ID_1,
-          CR.CONCEPT_ID_2,
-          C.CONCEPT_ID   AS PANEL_CONCEPT_ID,
-          C.CONCEPT_NAME AS PANEL_CONCEPT_NAME,
-          C.CONCEPT_CODE AS PANEL_CONCEPT_CODE
-        FROM CONCEPT_RELATIONSHIP CR
-        JOIN CONCEPT C ON C.CONCEPT_ID = CR.CONCEPT_ID_2
-        WHERE CR.RELATIONSHIP_ID = 'Contained in panel'
+          b.std_concept_id,
+          COUNT(*) AS panel_count
+        FROM base b
+        INNER JOIN CONCEPT_RELATIONSHIP cr
+          ON cr.CONCEPT_ID_2 = b.std_concept_id
+          AND cr.RELATIONSHIP_ID = 'Contained in panel'
+          AND COALESCE(cr.INVALID_REASON, '') = ''
+        GROUP BY b.std_concept_id
       ),
-      term AS (
+      term_raw AS (
         SELECT
           'Lab Test' AS lab_test_type,
-          b.CONCEPT_ID        AS term_concept,
+          b.std_concept_id    AS std_concept_id,
           b.CONCEPT_NAME      AS search_result,
           b.CONCEPT_CODE      AS searched_code,
           b.CONCEPT_CLASS_ID  AS searched_concept_class_id,
@@ -116,44 +115,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           p_c.CONCEPT_NAME    AS property,
           sc_c.CONCEPT_NAME   AS scale,
           sy_c.CONCEPT_NAME   AS system,
-          t_c.CONCEPT_NAME    AS time
+          t_c.CONCEPT_NAME    AS time,
+          COALESCE(pn.panel_count, 0) AS panel_count
         FROM base b
-        LEFT JOIN prop p           ON p.CONCEPT_ID_1 = b.CONCEPT_ID
-        LEFT JOIN CONCEPT p_c      ON p_c.CONCEPT_ID = p.CONCEPT_ID_2
-                                      AND (p_c.INVALID_REASON IS NULL OR p_c.INVALID_REASON = '')
-        LEFT JOIN scale s          ON s.CONCEPT_ID_1 = b.CONCEPT_ID
-        LEFT JOIN CONCEPT sc_c     ON sc_c.CONCEPT_ID = s.CONCEPT_ID_2
-                                      AND (sc_c.INVALID_REASON IS NULL OR sc_c.INVALID_REASON = '')
-        LEFT JOIN sys sy           ON sy.CONCEPT_ID_1 = b.CONCEPT_ID
-        LEFT JOIN CONCEPT sy_c     ON sy_c.CONCEPT_ID = sy.CONCEPT_ID_2
-                                      AND (sy_c.INVALID_REASON IS NULL OR sy_c.INVALID_REASON = '')
-        LEFT JOIN tm t             ON t.CONCEPT_ID_1 = b.CONCEPT_ID
-        LEFT JOIN CONCEPT t_c      ON t_c.CONCEPT_ID = t.CONCEPT_ID_2
-                                      AND (t_c.INVALID_REASON IS NULL OR t_c.INVALID_REASON = '')
+        LEFT JOIN prop p ON p.std_concept_id = b.std_concept_id
+        LEFT JOIN CONCEPT p_c ON p_c.CONCEPT_ID = p.CONCEPT_ID_2 AND COALESCE(p_c.INVALID_REASON,'') = ''
+        LEFT JOIN scale s ON s.std_concept_id = b.std_concept_id
+        LEFT JOIN CONCEPT sc_c ON sc_c.CONCEPT_ID = s.CONCEPT_ID_2 AND COALESCE(sc_c.INVALID_REASON,'') = ''
+        LEFT JOIN sys sy ON sy.std_concept_id = b.std_concept_id
+        LEFT JOIN CONCEPT sy_c ON sy_c.CONCEPT_ID = sy.CONCEPT_ID_2 AND COALESCE(sy_c.INVALID_REASON,'') = ''
+        LEFT JOIN tm t ON t.std_concept_id = b.std_concept_id
+        LEFT JOIN CONCEPT t_c ON t_c.CONCEPT_ID = t.CONCEPT_ID_2 AND COALESCE(t_c.INVALID_REASON,'') = ''
+        LEFT JOIN panels pn ON pn.std_concept_id = b.std_concept_id
       ),
-      LOINCpanel AS (
+      term AS (
         SELECT
-          'Panel' AS lab_test_type,
-          C.CONCEPT_ID            AS term_concept,
-          C.CONCEPT_NAME          AS search_result,
-          C.CONCEPT_CODE          AS searched_code,
-          C.CONCEPT_CLASS_ID      AS searched_concept_class_id,
-          C.VOCABULARY_ID         AS vocabulary_id,
-          NULL        AS property,
-          NULL        AS scale,
-          NULL        AS system,
-          NULL        AS time
-        FROM CONCEPT C
-        JOIN term T ON T.term_concept IN (
-          SELECT CONCEPT_ID_1 FROM panel WHERE PANEL_CONCEPT_ID = C.CONCEPT_ID
-        )
-        WHERE C.VOCABULARY_ID = 'LOINC'
-        GROUP BY C.CONCEPT_ID, C.CONCEPT_NAME, C.CONCEPT_CODE, C.CONCEPT_CLASS_ID, C.VOCABULARY_ID
+          lab_test_type,
+          std_concept_id,
+          search_result,
+          searched_code,
+          searched_concept_class_id,
+          vocabulary_id,
+          STRING_AGG(property, ', ') AS property,
+          STRING_AGG(scale, ', ') AS scale,
+          STRING_AGG(system, ', ') AS system,
+          STRING_AGG(time, ', ') AS time,
+          MAX(panel_count) AS panel_count
+        FROM term_raw
+        GROUP BY
+          lab_test_type,
+          std_concept_id,
+          search_result,
+          searched_code,
+          searched_concept_class_id,
+          vocabulary_id
       )
-      SELECT TOP 1000 * FROM term
-      UNION ALL
-      SELECT * FROM LOINCpanel
-      ORDER BY vocabulary_id, term_concept ASC
+      SELECT * FROM term
+      ORDER BY vocabulary_id, std_concept_id ASC
     `;
 
     // Execute query

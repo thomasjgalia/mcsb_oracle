@@ -1,0 +1,814 @@
+[
+  {
+    "attribute": "Has property",
+    "raw_value": "-",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Angle",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Appearance",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Arbitrary",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Arbitrary Concentration",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Arbitrary Content",
+    "property_group": "content",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Arbitrary Rate",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Arbitrary fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Area",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Area Fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Area Ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Area under the curve",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Catalytic Activity",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Catalytic Concentration",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Catalytic Content",
+    "property_group": "content",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Catalytic Fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Catalytic Rate",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Catalytic Ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Catalytic substance",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Color Ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Decimal catalytic fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Decimal mass fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Decimal number fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Decimal substance fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Decimal volume fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Diameter",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Energy Content",
+    "property_group": "content",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Energy Difference",
+    "property_group": "difference_change",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Energy/Area",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Entitic Catalytic Activity",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Entitic length",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Entitic mass",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Entitic number",
+    "property_group": "count",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Entitic substance",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Entitic substance ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Entitic volume",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Finding",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Fluid Conductance",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Genotype",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Identifier",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Impression/interpretation of study",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Length",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Length fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Likelihood",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Log Number Ratio",
+    "property_group": "ratio_fraction",
+    "flags": [
+      "log"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Log molar concentration",
+    "property_group": "concentration",
+    "flags": [
+      "log"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Log number concentration",
+    "property_group": "concentration",
+    "flags": [
+      "log"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Log unit concentration",
+    "property_group": "concentration",
+    "flags": [
+      "log"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Logarithmic entitic number",
+    "property_group": "count",
+    "flags": [
+      "log"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass Concentration",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass Concentration Squared",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass Content",
+    "property_group": "content",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass Rate",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass Rate Range",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass Ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass concentration difference",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass concentration percent difference",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass difference",
+    "property_group": "difference_change",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Mass or Substance Rate",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Morphology",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Multiple of the median",
+    "property_group": "derived",
+    "flags": [
+      "distribution"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "NCncRange",
+    "property_group": "derived",
+    "flags": [
+      "range"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Nucleotide sequence",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "NumRange",
+    "property_group": "derived",
+    "flags": [
+      "range"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Number (count)",
+    "property_group": "count",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Number Areic (per area)",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Number Concentration",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Number Content",
+    "property_group": "content",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Number Fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Number Rate",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Number Ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Optical density",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Osmolality",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Osmolarity",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Partial pressure",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Percent difference",
+    "property_group": "difference_change",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Percentile",
+    "property_group": "derived",
+    "flags": [
+      "distribution"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Power (Energy/Time)",
+    "property_group": "time",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Presence or Identity",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Presence or Threshold",
+    "property_group": "categorical",
+    "flags": [
+      "threshold"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Pressure",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Pressure Ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Quintile",
+    "property_group": "derived",
+    "flags": [
+      "distribution"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative Arbitrary Concentration",
+    "property_group": "concentration",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative Density",
+    "property_group": "physical",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative Mass Concentration",
+    "property_group": "concentration",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative Ratio",
+    "property_group": "ratio_fraction",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative Substance Concentration",
+    "property_group": "concentration",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative catalytic concentration",
+    "property_group": "concentration",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative mass rate",
+    "property_group": "rate",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative substance rate",
+    "property_group": "rate",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Relative time",
+    "property_group": "time",
+    "flags": [
+      "relative"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Saturation Fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Scale",
+    "property_group": "derived",
+    "flags": [
+      "score_like"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Score",
+    "property_group": "derived",
+    "flags": [
+      "score_like"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Score range",
+    "property_group": "derived",
+    "flags": [
+      "score_like",
+      "range"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Substance Amount",
+    "property_group": "other",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Substance Concentration",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Substance Concentration Squared",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Substance Content",
+    "property_group": "content",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Substance Fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Substance Rate",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Substance Ratio",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Substance concentration difference",
+    "property_group": "concentration",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Susceptibility (microorganisms)",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Temperature",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "ThreshNum",
+    "property_group": "derived",
+    "flags": [
+      "threshold"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Threshold",
+    "property_group": "derived",
+    "flags": [
+      "threshold"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Threshold Arbitrary Concentration",
+    "property_group": "concentration",
+    "flags": [
+      "threshold"
+    ]
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Time (e.g. seconds)",
+    "property_group": "time",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Time Difference",
+    "property_group": "time",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Time Ratio",
+    "property_group": "time",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Titer",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Type",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Variant call file",
+    "property_group": "categorical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Velocity (distance/time)",
+    "property_group": "time",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Viscosity",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Volume",
+    "property_group": "physical",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Volume Fraction",
+    "property_group": "ratio_fraction",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Volume Rate",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Volume Rate Content",
+    "property_group": "content",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Volume Rate/Area",
+    "property_group": "rate",
+    "flags": []
+  },
+  {
+    "attribute": "Has property",
+    "raw_value": "Z-score",
+    "property_group": "derived",
+    "flags": [
+      "distribution",
+      "score_like"
+    ]
+  }
+]

@@ -11,7 +11,7 @@ type SortDirection = 'asc' | 'desc';
 interface Step1SearchProps {
   onConceptSelected: (concept: SearchResult, domain: DomainType) => void;
   currentStep: number;
-  workflow: 'direct' | 'hierarchical';
+  workflow: 'direct' | 'hierarchical' | 'labtest';
   searchResults: SearchResult[];
   setSearchResults: (results: SearchResult[]) => void;
   lastSearchTerm: string;

@@ -1,7 +1,7 @@
 {
   "name": "mcsb-oracle",
   "version": "1.0.0",
-  "description": "Medical Code Set Builder - Oracle Cloud Edition",
+  "description": "Medical Code Set Builder",
   "type": "module",
   "scripts": {
     "dev": "vite",

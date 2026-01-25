@@ -19,6 +19,7 @@ app.use(express.json());
 // Import API handlers
 import searchHandler from './api/search.js';
 import labtestSearchHandler from './api/labtest-search.js';
+import labtestPanelSearchHandler from './api/labtest-panel-search.js';
 import hierarchyHandler from './api/hierarchy.js';
 import codesetHandler from './api/codeset.js';
 import chatHandler from './api/chat.js';
@@ -66,6 +67,7 @@ const vercelToExpress = (handler: any) => {
 // API Routes
 app.post('/api/search', vercelToExpress(searchHandler));
 app.post('/api/labtest-search', vercelToExpress(labtestSearchHandler));
+app.post('/api/labtest-panel-search', vercelToExpress(labtestPanelSearchHandler));
 app.post('/api/hierarchy', vercelToExpress(hierarchyHandler));
 app.post('/api/codeset', vercelToExpress(codesetHandler));
 app.post('/api/chat', vercelToExpress(chatHandler));
