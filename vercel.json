@@ -4,7 +4,7 @@
   "framework": "vite",
   "outputDirectory": "dist",
   "functions": {
-    "api/**/*.ts": {
+    "api/*.ts": {
       "maxDuration": 30
     }
   },
